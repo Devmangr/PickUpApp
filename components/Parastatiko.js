@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, Pressable, Alert, ToastAndroid, Button } from "react-native";
+import { View, Text, StyleSheet, TextInput, Alert, Button } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAppContext } from './AppContext';
@@ -58,8 +58,6 @@ const ParastatikoDetail = ({ selectedType }) => {
       //console.log(apiData);
       setBtnLoading(false);
       if (apiData.error) {
-        console.log('Inside If');
-        //ToastAndroid.show(`Μήνυμα λάθους: ${apiData.error}`, ToastAndroid.LONG);
         Alert.alert('Σφάλμα', `Μήνυμα λάθους: ${apiData.error}`, [
           {
             text: 'Ok',
@@ -125,6 +123,7 @@ const ParastatikoDetail = ({ selectedType }) => {
       data.amtrn_S1 = [{ amid: selectedSupplierId }];
       data.Number = docnumber;
       data.docserie = seriecode;
+      data.branchid = branch;
     } else if (selectedType === 'inventory') {
       data.branchid = branch;
     }
@@ -134,7 +133,7 @@ const ParastatikoDetail = ({ selectedType }) => {
       data: data,
     };
     if (selectedType === 'returning') {
-      jsonData.doprint = 1
+      jsonData.doprint = 2
     }
     console.log(jsonData);
     sendPurchase(jsonData);
@@ -202,9 +201,6 @@ const ParastatikoDetail = ({ selectedType }) => {
           disabled={btnLoading}>
           {btnLoading ? 'Loading...' : 'Αποθήκευση'}
         </Button>
-        {/*<Pressable onPress={handleSave}>
-          <Text style={styles.btn}>Save</Text>
-        </Pressable>*/}
       </View>
     </View>
   );

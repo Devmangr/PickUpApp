@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, 
 import BarcodeComponent from "./scanner";
 import { encode as btoa } from 'base-64';
 import { useAppContext } from "./AppContext";
-import * as Print from 'expo-print';
+
 
 export default function FirstTab() {
   const [qtyValue, setQtyValue] = useState('');
@@ -19,31 +19,6 @@ export default function FirstTab() {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupInputValue, setPopupInputValue] = useState('');
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
-
-  //test gia print
-  const createAndPrintPDF = async () => {
-    const htmlContent = `
-    <html>
-      <body>
-        <h1 style="color: blue; text-align: center;">Test PDF Document</h1>
-        <p>This is a test PDF generated from React Native with Expo.</p>
-      </body>
-    </html>
-  `;
-
-    try {
-      // Δημιουργία PDF και αποθήκευση στο σύστημα αρχείων
-      const { uri } = await Print.printToFileAsync({
-        html: htmlContent,
-      });
-      console.log('PDF saved to:', uri);
-
-      // Στέλνουμε το PDF για εκτύπωση
-      await Print.printAsync({ uri });
-    } catch (error) {
-      console.error('Error creating PDF:', error);
-    }
-  };
 
   const startScanner = () => {
     setIsScanning(true);
@@ -257,13 +232,6 @@ export default function FirstTab() {
           </View>
         </View>
       </Modal>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>PDF Generation and Printing Example</Text>
-        <Button
-          title="Create and Print PDF"
-          onPress={createAndPrintPDF}
-        />
-      </View>
     </View>
   )
 }
