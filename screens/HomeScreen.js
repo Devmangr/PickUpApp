@@ -7,7 +7,9 @@ const HomeScreen = ({ navigation }) => {
             navigation.navigate('Ρυθμίσεις');
         } else if (type === 'availability') {
             navigation.navigate('Διαθεσιμότητα')
-        }      
+        } else if (type === 'inoutsup') {
+            navigation.navigate('Αγορές - Πωλήσεις')
+        }
         else {
             navigation.navigate('Main', { selectedType: type });
         }
@@ -28,6 +30,9 @@ const HomeScreen = ({ navigation }) => {
                 </Pressable>
                 <Pressable style={styles.button} onPress={() => handleSelection('availability')}>
                     <Text style={styles.buttonText}>Διαθεσιμότητα Προϊόντων</Text>
+                </Pressable>
+                <Pressable style={styles.button} onPress={() => handleSelection('inoutsup')}>
+                    <Text style={styles.buttonText}>Αγορές - Πωλήσεις</Text>
                 </Pressable>
                 <Pressable style={styles.button} onPress={() => handleSelection('settings')}>
                     <Text style={styles.buttonText}>Ρυθμίσεις</Text>

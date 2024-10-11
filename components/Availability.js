@@ -121,7 +121,7 @@ export default function Availability() {
     }
 
     return (
-        <View style={styles.container}>
+        <View style={styles.container}> 
             <View style={styles.contentContainer}>
                 <View style={styles.row}>
                     <Text style={styles.caption}>Κωδικός:</Text>
