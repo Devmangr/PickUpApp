@@ -17,7 +17,7 @@ const InOutSupTable = ({ combinedData }) => {
             <ScrollView>
                 {combinedData.map((item, index) => (
                     <View key={index} style={styles.tableRow}>
-                        <Text style={[styles.cellText,styles.colCode, styles.cellCode]}>{item.Code}</Text>
+                        <Text style={[styles.cellText,styles.colCode, styles.cellCode]}>{item.code}</Text>
                         <Text style={[styles.cellText, styles.colDescription]}>{item.Description}</Text>
                         <Text style={[styles.cellTextBalance, styles.colInqty]}>{item.inQty}</Text>
                         <Text style={[styles.cellTextBalance, styles.colOutqty]}>{item.outQty}</Text>

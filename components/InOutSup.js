@@ -21,7 +21,7 @@ const InOutSup = () => {
     const [selectedSupplierDropdown, setSelectedSupplierDropdown] = useState(null);
 
     const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
-
+    
     const fetchSuppliers = async () => {
         try {
             const sqlQuery = JSON.stringify({ "sql": "select id, code, name from supplier ", "dbfqr": true, "params": [] });
@@ -42,11 +42,15 @@ const InOutSup = () => {
         }
     };
 
+    useEffect( () => {
+        fetchSuppliers()
+    },[]
+    );
     const handleQuery = async () => {
         if (fromDate && toDate) {
             setBtnLoading(true);
             try {
-                const sqlQuery = JSON.stringify({ "sql": "SELECT item.id itemid, [Item].Code As Code, [Item].Description As Description, SUM(ItemTrn.PriQty*ItemTrn.DocSign*ItemTrn.InSheet) As inQty into #tbl FROM [ItemTrn] As [ItemTrn] Left join [Item] AS [Item] ON (Item.Id=ItemTrn.ItemId) Left join [DocTrn] AS [DocTrn] ON (DocTrn.Id=ItemTrn.TrnDocId) Left join [AllMaster] AS [AllMaster] ON (AllMaster.Id=ItemTrn.AmId) Left join [NoteType] AS [NoteType] ON (ItemTrn.TrnType=NoteType.NoteCode) WHERE DocTrn.DocDate >= :0 AND DocTrn.DocDate <= :1 AND NoteType.Rtype=1 AND ItemTrn.TrnType= 2 AND AllMaster.id= :2 and doctrn.BranchID = :3 GROUP BY item.id,ITEM.CODE, ITEM.Description select agor.*, isnull(pol.PriQty,0) outQty, isnull(fnqty.qty,0) as bal from #tbl agor left join (SELECT itemtrn.ItemID, SUM(ItemTrn.PriQty*(ItemTrn.OutQty-ItemTrn.InQty)*ItemTrn.DocSign*ItemTrn.InSheet) As PriQty FROM [ItemTrn] As [ItemTrn] Left join [AllMaster] AS [AllMaster] ON (AllMaster.Id=ItemTrn.AmId) Left join [NoteType] AS [NoteType] ON (ItemTrn.TrnType=NoteType.NoteCode) WHERE itemtrn.DocDate >= :4 AND itemtrn.DocDate <= :5 AND NoteType.Rtype=1 AND ItemTrn.TrnType= 20 and itemtrn.WHLCodeID=:6 GROUP BY ItemID ) as pol on pol.itemid = agor.itemid left join (select IteID, QtyProvision qty from fnQtyProvision1(year(getdate())) where WhLCodeID=:7) fnqty on fnqty.IteID = agor.itemid", "dbfqr": true, "params": [fromDate.toISOString().split('T')[0], toDate.toISOString().split('T')[0], selectedSupplierDropdown, branch, fromDate.toISOString().split('T')[0], toDate.toISOString().split('T')[0], branch, branch] });
+                const sqlQuery = JSON.stringify({ "sql": "declare @val varchar(max); declare @amid int=:0; declare @branchId int=:1; declare @dtFrom varchar(30)=:2; declare @dtTo varchar(30)=:3; exec inoutsup @amid, @branchId, @dtFrom, @dtTo, @val output;", "dbfqr": false, "params": [selectedSupplierDropdown, branch, fromDate.toISOString().split('T')[0], toDate.toISOString().split('T')[0]] });
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: {
@@ -57,13 +61,14 @@ const InOutSup = () => {
                     body: sqlQuery,
                 });
                 const textData = await response.text();
-
                 const newData = JSON.parse(textData);
                 //console.log('Parsed Data:', newData);
                 setBtnLoading(false);
 
                 if (Array.isArray(newData)) {
-                    setReturnedData(newData);
+                    const parsedData = JSON.parse(newData[0].__COLUMN1);
+                    //console.log(parsedData);
+                    setReturnedData(parsedData);
                 } else {
                     console.error('Expected an array, but got:', typeof newData);
                 }

@@ -21,7 +21,7 @@ const ParastatikoDetail = ({ selectedType }) => {
     setShowDatePicker(false);
     if (date) {
       setSelectedDate(date);
-    }
+    } 
   }
 
   const handleFocus = (focus) => {
