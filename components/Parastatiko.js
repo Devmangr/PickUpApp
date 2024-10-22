@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, Alert, Button } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -99,7 +99,9 @@ const ParastatikoDetail = ({ selectedType }) => {
       console.error('Error fetching suppliers', error);
     }
   };
-
+  useEffect(()=>{
+    fetchSuppliers();
+  },[])
   const handleSave = () => {
     const data =
     {

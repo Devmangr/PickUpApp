@@ -25,7 +25,7 @@ export default function Availability() {
     const handleBarcodeScanned = async (data) => {
 
         setIsScanning(false);
-        const body = JSON.stringify({ "sql": "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where ibc.BarCode = :0 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision", "dbfqr": true, "params": [data] });
+        const body = JSON.stringify({ "sql": "declare @bc varchar(30) =:0; exec bcsearch @code=@bc", "dbfqr": true, "params": [data] });
         try {
             const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
 
@@ -69,10 +69,11 @@ export default function Availability() {
 
     const handleCodeSearch = async (data) => {
         setIsPopupVisible(false);
-        const body = JSON.stringify({ "sql": "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where ibc.BarCode = :0 or it.code=:1 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision", "dbfqr": true, "params": [data, data] });
+        
+        const body = JSON.stringify({ "sql": "declare @bc varchar(30) =:0; exec codesearch @code=@bc", "dbfqr": true, "params": [data] });
         try {
             const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
-
+            
             const [response1, response2, response3] = await Promise.all(
                 endpoints.map(endpoint => fetch(endpoint, {
                     method: 'POST',
