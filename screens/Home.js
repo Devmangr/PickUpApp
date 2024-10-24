@@ -5,9 +5,9 @@ import GridComponent from '../components/gridComponent';
 import FirstTab from '../components/firstTab';
 import ParastatikoDetail from '../components/Parastatiko';
 
-const FirstRoute = () => (
+const FirstRoute = ({ selectedType }) => (
   <View style={{ flex: 1 }}>
-    <FirstTab />
+    <FirstTab selectedType={selectedType}/>
   </View>
 );
 
@@ -25,7 +25,6 @@ const ThirdRoute = ({ selectedType }) => (
 
 const TabViewExample = ({ route }) => {
   const { selectedType } = route.params || {};
-  console.log(selectedType);
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'first', title: 'Αναζήτηση' },
@@ -36,7 +35,7 @@ const TabViewExample = ({ route }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'first':
-        return <FirstRoute />;
+        return <FirstRoute selectedType={selectedType}/>;
       case 'second':
         return <SecondRoute />;
       case 'third':

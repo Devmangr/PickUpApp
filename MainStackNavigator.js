@@ -6,6 +6,7 @@ import Settings from './components/Settings';
 import TabViewExample from './screens/Home'; 
 import Availability from './components/Availability';
 import InOutSup from './components/InOutSup';
+import ItemInfo from './components/ItemInfo';
 
 const Stack = createStackNavigator();
 
@@ -16,7 +17,8 @@ const MainStackNavigator = () => {
       <Stack.Screen name="Ρυθμίσεις" component={Settings} />
       <Stack.Screen name="Main" component={TabViewExample} />
       <Stack.Screen name="Διαθεσιμότητα" component={Availability} />
-      <Stack.Screen name="Αγορές - Πωλήσεις" component={InOutSup} />    
+      <Stack.Screen name="Αγορές - Πωλήσεις" component={InOutSup} />
+      <Stack.Screen name="Πληροφορίες Είδους" component={ItemInfo} />   
     </Stack.Navigator>
   );
 };

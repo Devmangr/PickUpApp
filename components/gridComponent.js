@@ -16,7 +16,7 @@ const GridComponent = () => {
       <View style={styles.container}>
         <Table style={styles.table}>
           <Row key={Math.random()} data={tableHead} widthArr={widthArr} style={styles.head} />
-          <Rows key={Math.random()} data={tableData} widthArr={widthArr} style={styles.rowText} textStyle={styles.textStyle}/>
+          <Rows key={Math.random()} data={tableData} widthArr={widthArr} style={styles.rowText} textStyle={styles.textstyle}/>
         </Table>
       </View>
     </ScrollView>
@@ -24,7 +24,7 @@ const GridComponent = () => {
 };
 
 const styles = StyleSheet.create({
-  textStyle:{fontSize:12, fontWeight:600},
+  textstyle:{fontSize:12, fontWeight:600},
   container: {
     flex: 1,
     padding: 14,

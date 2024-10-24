@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert, Button } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
 import BarcodeComponent from "./scanner";
 import { encode as btoa } from 'base-64';
 import { useAppContext } from "./AppContext";
 
 
-export default function FirstTab() {
+export default function FirstTab({ selectedType }) {
   const [qtyValue, setQtyValue] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const { itemData, handleQuantityChange, wsHost, wsPort, wsRoot, wsUser, wsPass, priceList } = useAppContext();
@@ -171,16 +171,17 @@ export default function FirstTab() {
             keyboardType="numeric"
           />
         </View>
+        {selectedType === 'receiving' && (
         <View style={styles.row}>
-          <Text style={styles.caption}>Αλλαγή τιμής:</Text>
+          <Text style={styles.caption}>Σχόλια:</Text>
           <TextInput
             style={styles.input}
-            placeholder="Αλ. Τιμής..."
+            placeholder="Σχόλια..."
             value={newPrice}
             onChangeText={(pr) => setNewPrice(pr)}
-            keyboardType="numeric"
+            keyboardType="text"
           />
-        </View>
+        </View>)}
       </View>
       <View style={styles.buttonContainer}>
         <Pressable onPress={() => setIsPopupVisible(true)}>

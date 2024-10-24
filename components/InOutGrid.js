@@ -1,7 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView,TouchableOpacity, Modal } from 'react-native';
+import AvailabilityModal from './AvailabilityModal';
 
 const InOutSupTable = ({ combinedData }) => {
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectdItem, setSelectedItem] = useState(null);
+
+    const handleRowPress = (item) => {
+        setSelectedItem(item);
+        setIsModalVisible(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalVisible(false);
+        setSelectedItem(null);
+    };
+
     return (
         <View style={styles.tableContainer}>
             {/* Table Header */}
@@ -16,15 +30,26 @@ const InOutSupTable = ({ combinedData }) => {
             {/* Table Rows */}
             <ScrollView>
                 {combinedData.map((item, index) => (
-                    <View key={index} style={styles.tableRow}>
-                        <Text style={[styles.cellText,styles.colCode, styles.cellCode]}>{item.code}</Text>
-                        <Text style={[styles.cellText, styles.colDescription]}>{item.Description}</Text>
-                        <Text style={[styles.cellTextBalance, styles.colInqty]}>{item.inQty}</Text>
-                        <Text style={[styles.cellTextBalance, styles.colOutqty]}>{item.outQty}</Text>
-                        <Text style={[styles.cellTextBalance, styles.colBal]}>{item.bal}</Text>
-                    </View>
+                    <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
+                        <View key={index} style={styles.tableRow}>
+                            <Text style={[styles.cellText,styles.colCode, styles.cellCode]}>{item.code}</Text>
+                            <Text style={[styles.cellText, styles.colDescription]}>{item.Description}</Text>
+                            <Text style={[styles.cellTextBalance, styles.colInqty]}>{item.inQty}</Text>
+                            <Text style={[styles.cellTextBalance, styles.colOutqty]}>{item.outQty}</Text>
+                            <Text style={[styles.cellTextBalance, styles.colBal]}>{item.bal}</Text>
+                        </View>
+                    </TouchableOpacity>
                 ))}
             </ScrollView>
+            {/* Modal for Availability */}
+            <Modal 
+                transparent={false}
+                animationType='slide'
+                visible={isModalVisible}
+                onRequestClose={handleCloseModal}
+                >
+                    <AvailabilityModal selectedItem={selectdItem} onClose={handleCloseModal} />
+                </Modal>
         </View>
     );
 };

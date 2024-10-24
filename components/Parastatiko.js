@@ -25,7 +25,6 @@ const ParastatikoDetail = ({ selectedType }) => {
   }
 
   const handleFocus = (focus) => {
-    //console.log(isPickerFocused);
     if (!isPickerFocused) {
       setIsPickerFocused(true);
     } else {
@@ -99,18 +98,17 @@ const ParastatikoDetail = ({ selectedType }) => {
       console.error('Error fetching suppliers', error);
     }
   };
+
   useEffect(()=>{
     fetchSuppliers();
   },[])
+
   const handleSave = () => {
     const data =
     {
       docprmid: selectedType === 'returning' ? 32 : selectedType === 'receiving' ? 28 : 70,
       seriecode: selectedType === 'receiving' ? seriesT : seriesM,
-      //Number: docnumber,
-      //docserie: seriecode,
       docdate: selectedDate.toISOString().split('T')[0],
-      //amtrn_s1: [{amid:selectedSupplierId}],
       Itetrn: itemData.map((item) => ({
         itemid: item.itemid,
         priqty: item.quantity,
@@ -137,12 +135,12 @@ const ParastatikoDetail = ({ selectedType }) => {
     if (selectedType === 'returning') {
       jsonData.doprint = 2
     }
-    console.log(jsonData);
     sendPurchase(jsonData);
   };
 
   return (
     <View style={styles.container}>
+      {selectedType != 'inventory' && (
       <View style={styles.row}>
         <Text style={[styles.caption, styles.alignRight]}>Προμηθευτής:</Text>
         <Picker
@@ -158,9 +156,8 @@ const ParastatikoDetail = ({ selectedType }) => {
               value={supplier.id}
             />
           ))}
-
         </Picker>
-      </View>
+      </View>)}
       <View style={styles.row}>
         <Text style={[styles.caption, styles.alignRight]}>Ημερομηνία:</Text>
         <TextInput
@@ -178,23 +175,25 @@ const ParastatikoDetail = ({ selectedType }) => {
           />
         )}
       </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>Αριθμός:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Αριθμός.."
-          value={docnumber}
-          onChangeText={(text) => setDocnumber(text)}
-        />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>Σειρά:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Σειρά.."
-          value={seriecode || '.'}
-          onChangeText={(text) => setSeriecode(text)} />
-      </View>
+      {selectedType === 'receiving' && (
+        <View style={styles.row}>
+          <Text style={[styles.caption, styles.alignRight]}>Αριθμός:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Αριθμός.."
+            value={docnumber}
+            onChangeText={(text) => setDocnumber(text)}
+          />
+        </View>)}
+      {selectedType === 'receiving' && (
+        <View style={styles.row}>
+          <Text style={[styles.caption, styles.alignRight]}>Σειρά:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Σειρά.."
+            value={seriecode || '.'}
+            onChangeText={(text) => setSeriecode(text)} />
+        </View>)}
       <View style={styles.buttonContainer}>
         <Button
           title="Αποθήκευση"
@@ -206,7 +205,6 @@ const ParastatikoDetail = ({ selectedType }) => {
       </View>
     </View>
   );
-
 }
 
 const styles = StyleSheet.create({

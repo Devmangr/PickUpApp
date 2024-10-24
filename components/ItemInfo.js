@@ -1,35 +1,54 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert, FlatList } from "react-native";
-import BarcodeComponent from "./scanner";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Pressable, Modal, TextInput } from "react-native";
 import { encode as btoa } from 'base-64';
 import { useAppContext } from "./AppContext";
-import AvailabilityGrid from "./AvailabilityGrid";
+import BarcodeComponent from "./scanner";
 
-export default function Availability() {
-    const { wsHost, wsPort, wsUser, wsPass } = useAppContext();
+export default function ItemInfo() {
+    const { wsHost, wsPort, wsUser, wsPass, wsRoot, branch } = useAppContext();
     const [isScanning, setIsScanning] = useState(false);
     const [labelCode, setLabelCode] = useState('');
     const [labelDescr, setLabelDescr] = useState('');
     const [labelBarcode, setLabelBarcode] = useState('');
+    const [lastDocdate, setLastDocdate] = useState('');
+    const [lastBuyPrice, setLastBuyPrice] = useState('');
+    const [lastBuyQty, setLastBuyQty] = useState('');
+    const [itemDescr, setItemDescr] = useState('');
+
     const [combinedData, setCombinedData] = useState([]);
     const [isPopupVisible, setIsPopupVisible] = useState(false);
     const [popupInputValue, setPopupInputValue] = useState('');
-    const API_ENDPOINT = `http://${wsHost}:${wsPort}/root/DBDataSetValues`;
-    const API_ENDPOINTOE = `http://${wsHost}:${wsPort}/oe/DBDataSetValues`;
-    const API_ENDPOINTZER = `http://${wsHost}:${wsPort}/zer/DBDataSetValues`;
-
+    const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
     const startScanner = () => {
         setIsScanning(true);
     };
 
-    const handleBarcodeScanned = async (data) => {
+    const handleCancelPopup = () => {
+        setPopupInputValue('');
+        setIsPopupVisible(false);
+    }
 
-        setIsScanning(false);
-        const body = JSON.stringify({ "sql": "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where ibc.BarCode =:0 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision", "dbfqr": true, "params": [data] });
+    String.prototype.escapeSpecialChars = function() {
+        return this.replace(/\\n/g, "\\n")
+                   .replace(/\\'/g, "\\'")
+                   .replace(/\\"/g, '\\"')
+                   .replace(/\\&/g, "\\&")
+                   .replace(/\\r/g, "\\r")
+                   .replace(/\\t/g, "\\t")
+                   .replace(/\\b/g, "\\b")
+                   .replace(/\\f/g, "\\f");
+    };
+
+    const handleCodeSearch = async (data) => {
+
+        setIsPopupVisible(false);
+        const body = JSON.stringify({"sql": "declare @itid int = (select distinct id from item left join itembarcode ibc on ibc.itemid = item.id where code =:0 or ibc.barcode=:1); declare @itdescr varchar(150) = (select distinct description from item left join itembarcode ibc on ibc.itemid = item.id where code =:2 or ibc.barcode=:3); SELECT Sum( priQty ) PriQty, Sum( itemtrn.net_val) /  Sum(priQty ) CalcPrice, SUM(itemtrn.Start_Val) / Sum(PriQty) Price, Min( itemtrn.DocDate ) DocDate, am.code, am.name, @itdescr itdescr FROM ItemTrn left join allmaster am on am.id=itemtrn.amid WHERE itemid = @itid AND itemtrn.trndocId = (SELECT max(ITr.TrnDocID) FROM ItemTrn itr INNER JOIN DocTrn DTrn ON (DTrn.Id = Itr.TrnDocId  AND DTrn.UpdLastPrice = 1) INNER JOIN DocPrmDetSt DPrmSt ON (DPrmst.DocId = Dtrn.docprmid AND dprmst.LineType = itr.linetype AND dprmst.updLastPrice = 1) WHERE itr.ItemId = @itid AND dtrn.iscanceled = 0 AND itr.InVal = 1 AND net_val > 0 AND priqty > 0 AND itr.Id > 0 and itr.amRowType=2 and itr.WHLCodeID=:4) group by am.code, am.name Having Sum(PriQty)<>0", "dbfqr": true, "params": [data, data, data, data, branch]
+        });
+        
         try {
-            const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
-
-            const [response1, response2, response3] = await Promise.all (endpoints.map(endpoint => fetch(endpoint, {
+            const endpoints = [API_ENDPOINT];
+            
+            const [response1] = await Promise.all(endpoints.map(endpoint => fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,19 +56,19 @@ export default function Availability() {
                 },
                 body: body,
             }))
-        );
-            const [data1, data2, data3] = await Promise.all([response1.json(), response2.json(), response3.json()]);
-
+            );
+            const [data1] = await Promise.all([response1.json()]);
             const compineData = [
                 ...(Array.isArray(data1) ? data1 : []),
-                ...(Array.isArray(data2) ? data2 : []),
-                ...(Array.isArray(data3) ? data3 : [])
             ];
 
             if (compineData.length > 0) {
-                setLabelCode(compineData[0].code);
-                setLabelDescr(compineData[0].description);
-                setLabelBarcode(data);
+                setLabelCode(data);
+                setLabelDescr(compineData[0].name);
+                setLastBuyPrice(compineData[0].Price.toFixed(2));
+                setLastDocdate(compineData[0].DocDate.split("-").reverse().join("-"));
+                setLastBuyQty(compineData[0].PriQty);
+                setItemDescr(compineData[0].itdescr);
                 setCombinedData(compineData)
             } else {
                 setLabelCode('Δεν βρέθηκε προϊόν');
@@ -65,48 +84,48 @@ export default function Availability() {
                 }
             ]);
         }
+        setPopupInputValue('');
     }
 
-    const handleCodeSearch = async (data) => {
-        setIsPopupVisible(false);
+    const handleBarcodeScanned = async (data) => {
+
+        setIsScanning(false);
+        const body = JSON.stringify({"sql": "declare @itid int = (select distinct id from item left join itembarcode ibc on ibc.itemid = item.id where ibc.barcode=:1); declare @itdescr varchar(150) = (select distinct description from item left join itembarcode ibc on ibc.itemid = item.id where ibc.barcode=:2); SELECT Sum( priQty ) PriQty, Sum( itemtrn.net_val) /  Sum(priQty ) CalcPrice, SUM(itemtrn.Start_Val) / Sum(PriQty) Price, Min( itemtrn.DocDate ) DocDate, am.code, am.name, @itdescr itdescr FROM ItemTrn left join allmaster am on am.id=itemtrn.amid WHERE itemid = @itid AND itemtrn.trndocId = (SELECT max(ITr.TrnDocID) FROM ItemTrn itr INNER JOIN DocTrn DTrn ON (DTrn.Id = Itr.TrnDocId  AND DTrn.UpdLastPrice = 1) INNER JOIN DocPrmDetSt DPrmSt ON (DPrmst.DocId = Dtrn.docprmid AND dprmst.LineType = itr.linetype AND dprmst.updLastPrice = 1) WHERE itr.ItemId = @itid AND dtrn.iscanceled = 0 AND itr.InVal = 1 AND net_val > 0 AND priqty > 0 AND itr.Id > 0 and itr.amRowType=2 and itr.WHLCodeID=:3) group by am.code, am.name Having Sum(PriQty)<>0", "dbfqr": true, "params": [data, data, branch]
+        });
         
-        const body = JSON.stringify({ "sql": "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where it.code=:1 or ibc.BarCode =:2 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision", "dbfqr": true, "params": [data, data] });
         try {
-            const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
+            const endpoints = [API_ENDPOINT];
             
-            const [response1, response2, response3] = await Promise.all(
-                endpoints.map(endpoint => fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa(`${wsUser}:${wsPass}`),
-                    },
-                    body: body,
-                }))
+            const [response1] = await Promise.all(endpoints.map(endpoint => fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + btoa(`${wsUser}:${wsPass}`),
+                },
+                body: body,
+            }))
             );
-
-            const [data1, data2, data3] = await Promise.all([response1.json(), response2.json(), response3.json()]);
-
-            const combinedData = [
+            const [data1] = await Promise.all([response1.json()]);
+            const compineData = [
                 ...(Array.isArray(data1) ? data1 : []),
-                ...(Array.isArray(data2) ? data2 : []),
-                ...(Array.isArray(data3) ? data3 : [])
             ];
 
-            if (combinedData.length > 0) {
-                setLabelCode(combinedData[0].code);
-                setLabelDescr(combinedData[0].description);
-                setLabelBarcode(data);
-                setCombinedData(combinedData);
+            if (compineData.length > 0) {
+                setLabelCode(data);
+                setLabelDescr(compineData[0].name);
+                setLastBuyPrice(compineData[0].Price.toFixed(2));
+                setLastDocdate(compineData[0].DocDate.split("-").reverse().join("-"));
+                setLastBuyQty(compineData[0].PriQty);
+                setItemDescr(compineData[0].itdescr);
+                setCombinedData(compineData)
             } else {
                 setLabelCode('Δεν βρέθηκε προϊόν');
                 setLabelDescr('');
                 setLabelBarcode(data);
                 setCombinedData([]);
             }
-
         } catch (error) {
-            Alert.alert('Σφάλμα', `Σφάλμα στην αναζήτηση κωδικού. Μήνυμα: ${error}. `, [
+            Alert.alert('Σφάλμα', `Σφάλμα στην αναζήτηση barcode. Μήνυμα: ${error}. `, [
                 {
                     text: 'Ok',
                     onPress: () => console.error('Error calling API', error)
@@ -116,13 +135,8 @@ export default function Availability() {
         setPopupInputValue('');
     }
 
-    const handleCancelPopup = () => {
-        setPopupInputValue('');
-        setIsPopupVisible(false);
-    }
-
     return (
-        <View style={styles.container}> 
+        <View style={styles.container}>
             <View style={styles.contentContainer}>
                 <View style={styles.row}>
                     <Text style={styles.caption}>Κωδικός:</Text>
@@ -130,20 +144,29 @@ export default function Availability() {
                 </View>
                 <View style={styles.row}>
                     <Text style={styles.caption}>Περιγραφή:</Text>
+                    <Text style={styles.rowdata}>{itemDescr}</Text>
+                </View>
+                <View style={styles.row}>
+                    <Text style={{fontSize: 18,fontWeight: '600',width:'100%',textAlign:'center'}}>Στοιχεία Τελευταίας Αγοράς</Text>
+                </View>
+                <View style={styles.row}>
+                    <Text style={styles.caption}>Επωνυμία:</Text>
                     <Text style={styles.rowdata}>{labelDescr}</Text>
                 </View>
                 <View style={styles.row}>
-                    <Text style={styles.caption}>Barcode:</Text>
-                    <Text style={styles.rowdata}>{labelBarcode}</Text>
+                    <Text style={styles.caption}>Τελ. Ημ/νία:</Text>
+                    <Text style={styles.rowdata}>{lastDocdate}</Text>
+                </View>
+                <View style={styles.row}>
+                    <Text style={styles.caption}>Τελ. Τιμή:</Text>
+                    <Text style={styles.rowdata}>{lastBuyPrice}</Text>
+                </View>
+                <View style={styles.row}>
+                    <Text style={styles.caption}>Τελ. Ποσότητα:</Text>
+                    <Text style={styles.rowdata}>{lastBuyQty}</Text>
                 </View>
             </View>
-            {/* Show store availability */}
-            <View style={styles.contentContainerStores}>
-                <View style={styles.rowHead}>
-                    <Text style={styles.captionHead}>Διαθ. Καταστημάτων</Text>
-                </View>
-                <AvailabilityGrid combinedData={combinedData} />
-            </View>
+
             <View style={styles.buttonContainer}>
                 <Pressable onPress={() => setIsPopupVisible(true)}>
                     <Text style={styles.btnCode}>Κωδικός</Text>
@@ -194,7 +217,6 @@ export default function Availability() {
         </View>
     )
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -209,7 +231,7 @@ const styles = StyleSheet.create({
     contentContainerStores: {
         padding: 4,
         marginTop: 10,
-        flex:1,        
+        flex: 1,
     },
     caption: {
         fontSize: 18,
@@ -221,7 +243,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         marginRight: 8,
-        textAlign:'center'
+        textAlign: 'center'
     },
     row: {
         flexDirection: 'row',
@@ -229,7 +251,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginBottom: 10,
     },
-    rowHead:{
+    rowHead: {
         flexDirection: 'row',
         justifyContent: 'space-between',
     },

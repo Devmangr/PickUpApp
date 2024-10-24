@@ -1,76 +1,26 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert, FlatList } from "react-native";
-import BarcodeComponent from "./scanner";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
 import { encode as btoa } from 'base-64';
 import { useAppContext } from "./AppContext";
 import AvailabilityGrid from "./AvailabilityGrid";
 
-export default function Availability() {
+export default function AvailabilityModal({selectedItem, onClose}) {
     const { wsHost, wsPort, wsUser, wsPass } = useAppContext();
-    const [isScanning, setIsScanning] = useState(false);
+    
     const [labelCode, setLabelCode] = useState('');
     const [labelDescr, setLabelDescr] = useState('');
     const [labelBarcode, setLabelBarcode] = useState('');
     const [combinedData, setCombinedData] = useState([]);
     const [isPopupVisible, setIsPopupVisible] = useState(false);
-    const [popupInputValue, setPopupInputValue] = useState('');
+    
     const API_ENDPOINT = `http://${wsHost}:${wsPort}/root/DBDataSetValues`;
     const API_ENDPOINTOE = `http://${wsHost}:${wsPort}/oe/DBDataSetValues`;
     const API_ENDPOINTZER = `http://${wsHost}:${wsPort}/zer/DBDataSetValues`;
 
-    const startScanner = () => {
-        setIsScanning(true);
-    };
-
-    const handleBarcodeScanned = async (data) => {
-
-        setIsScanning(false);
-        const body = JSON.stringify({ "sql": "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where ibc.BarCode =:0 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision", "dbfqr": true, "params": [data] });
-        try {
-            const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
-
-            const [response1, response2, response3] = await Promise.all (endpoints.map(endpoint => fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Basic ' + btoa(`${wsUser}:${wsPass}`),
-                },
-                body: body,
-            }))
-        );
-            const [data1, data2, data3] = await Promise.all([response1.json(), response2.json(), response3.json()]);
-
-            const compineData = [
-                ...(Array.isArray(data1) ? data1 : []),
-                ...(Array.isArray(data2) ? data2 : []),
-                ...(Array.isArray(data3) ? data3 : [])
-            ];
-
-            if (compineData.length > 0) {
-                setLabelCode(compineData[0].code);
-                setLabelDescr(compineData[0].description);
-                setLabelBarcode(data);
-                setCombinedData(compineData)
-            } else {
-                setLabelCode('Δεν βρέθηκε προϊόν');
-                setLabelDescr('');
-                setLabelBarcode(data);
-                setCombinedData([]);
-            }
-        } catch (error) {
-            Alert.alert('Σφάλμα', `Σφάλμα στην αναζήτηση barcode. Μήνυμα: ${error}. `, [
-                {
-                    text: 'Ok',
-                    onPress: () => console.error('Error calling API', error)
-                }
-            ]);
-        }
-    }
-
     const handleCodeSearch = async (data) => {
         setIsPopupVisible(false);
         
-        const body = JSON.stringify({ "sql": "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where it.code=:1 or ibc.BarCode =:2 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision", "dbfqr": true, "params": [data, data] });
+        const body = JSON.stringify({ "sql": "declare @bc varchar(30) =:0; exec codesearch @code=@bc", "dbfqr": true, "params": [data] });
         try {
             const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
             
@@ -113,13 +63,13 @@ export default function Availability() {
                 }
             ]);
         }
-        setPopupInputValue('');
     }
 
-    const handleCancelPopup = () => {
-        setPopupInputValue('');
-        setIsPopupVisible(false);
-    }
+    useEffect(() => {
+        if (selectedItem) {
+            handleCodeSearch(selectedItem.code);
+        }
+    },[selectedItem]);
 
     return (
         <View style={styles.container}> 
@@ -144,53 +94,9 @@ export default function Availability() {
                 </View>
                 <AvailabilityGrid combinedData={combinedData} />
             </View>
-            <View style={styles.buttonContainer}>
-                <Pressable onPress={() => setIsPopupVisible(true)}>
-                    <Text style={styles.btnCode}>Κωδικός</Text>
-                </Pressable>
-                <Pressable onPress={startScanner}>
-                    <Text style={styles.btnScan}>Scan</Text>
-                </Pressable>
-            </View>
-            {isScanning ? (
-                <BarcodeComponent onBarCodeScanned={handleBarcodeScanned} />
-            ) : null}
-
-            <Modal
-                transparent={false}
-                animationType="slide"
-                visible={isPopupVisible}
-                onRequestClose={() => setIsPopupVisible(false)}
-            >
-                <View style={styles.popupContainer}>
-                    <View style={styles.popupDataContainer}>
-                        <View style={styles.popup}>
-                            <Text style={styles.textInputLabel}>Δώσε κωδικό αναζήτησης</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Κωδικός..."
-                                value={popupInputValue}
-                                onChangeText={(text) => setPopupInputValue(text)}
-                                keyboardType="numeric"
-                            />
-                        </View>
-                        <View style={styles.buttonPopupContainer}>
-                            <TouchableOpacity
-                                style={styles.popupSearchButton}
-                                onPress={() => handleCodeSearch(popupInputValue)}
-                            >
-                                <Text style={styles.popupButtonText}>Αναζήτηση</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.popupCancelButton}
-                                onPress={handleCancelPopup}
-                            >
-                                <Text style={styles.popupButtonText}>Άκυρο</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeButtonText}>Κλείσιμο</Text>
+            </TouchableOpacity>
         </View>
     )
 }
@@ -339,5 +245,18 @@ const styles = StyleSheet.create({
     },
     popupButtonText: {
         color: 'white',
+    },
+    closeButton: {
+        marginTop: 20,
+        backgroundColor: 'red',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign:'center'
     },
 })
