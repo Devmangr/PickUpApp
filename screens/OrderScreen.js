@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { TabView, TabBar, SceneMap } from "react-native-tab-view";
 import { View } from "react-native";
 import GridComponent from "../components/gridComponent";
-import FirstTab from "../components/firstTab";
+import OrderSup from "../components/OrderSup";
 import ParastatikoDetail from "../components/Parastatiko";
 
-const FirstRoute = ({ selectedType }) => (
+const FirstRoute = () => (
   <View style={{ flex: 1 }}>
-    <FirstTab selectedType={selectedType} />
+    <OrderSup />
   </View>
 );
 
@@ -23,7 +23,7 @@ const ThirdRoute = ({ selectedType }) => (
   </View>
 );
 
-const TabViewExample = ({ route }) => {
+const OrderScreen = ({ route }) => {
   const { selectedType } = route.params || {};
   const [index, setIndex] = useState(0);
   const [routes] = useState([
@@ -35,7 +35,7 @@ const TabViewExample = ({ route }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "first":
-        return <FirstRoute selectedType={selectedType} />;
+        return <FirstRoute />;
       case "second":
         return <SecondRoute />;
       case "third":
@@ -65,4 +65,4 @@ const TabViewExample = ({ route }) => {
   );
 };
 
-export default TabViewExample;
+export default OrderScreen;

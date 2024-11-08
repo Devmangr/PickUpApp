@@ -4,10 +4,11 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
-import InOutSupTable from "./InOutGrid";
+import InOutSupTable from "./InOutOrder";
 
-const InOutSup = () => {
-  const { wsHost, wsPort, wsRoot, wsUser, wsPass, branch } = useAppContext();
+export default function OrderSup() {
+  const { wsHost, wsPort, wsRoot, wsUser, wsPass, branch, updateSelectSup } =
+    useAppContext();
   const [returnedData, setReturnedData] = useState([]);
   const [isPickerFocused, setIsPickerFocused] = useState(false);
   const [fromDate, setFromDate] = useState(null);
@@ -130,9 +131,10 @@ const InOutSup = () => {
           <Picker
             style={styles.input}
             selectedValue={selectedSupplierDropdown}
-            onValueChange={(itemValue) =>
-              setSelectedSupplierDropdown(itemValue)
-            }
+            onValueChange={(itemValue) => {
+              setSelectedSupplierDropdown(itemValue),
+                updateSelectSup(itemValue);
+            }}
             onFocus={() => handleFocus(true)}
           >
             {supplierDropdownData.map((supplier) => (
@@ -194,7 +196,7 @@ const InOutSup = () => {
       <InOutSupTable combinedData={returnedData} />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -237,5 +239,3 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 });
-
-export default InOutSup;

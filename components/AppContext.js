@@ -16,7 +16,8 @@ export const AppProvider = ({ children }) => {
   const [branch, setBranch] = useState('');
   const [branches, setBranches] = useState([]);
   const [branchDescr, setBranchDescr] = useState('');
-  
+  const [selectSup, setSelectSup] = useState('');
+
   const handleQuantityChange = (updatedData) => {
     setItemData(updatedData);
   }
@@ -47,6 +48,9 @@ export const AppProvider = ({ children }) => {
   }
   const updateBranch = (newBranch) => {
     setBranch(newBranch);
+  }
+  const updateSelectSup = (newSup) => {
+    setSelectSup(newSup);
   }
 
   const initializeSettings = async () => {
@@ -91,6 +95,8 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        selectSup,
+        updateSelectSup,
         itemData,
         handleQuantityChange,
         wsHost,

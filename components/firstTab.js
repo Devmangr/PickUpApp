@@ -1,23 +1,40 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import BarcodeComponent from "./scanner";
-import { encode as btoa } from 'base-64';
+import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 
-
 export default function FirstTab({ selectedType }) {
-  const [qtyValue, setQtyValue] = useState('');
-  const [newPrice, setNewPrice] = useState('');
-  const { itemData, handleQuantityChange, wsHost, wsPort, wsRoot, wsUser, wsPass, priceList } = useAppContext();
+  const [qtyValue, setQtyValue] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const {
+    itemData,
+    handleQuantityChange,
+    wsHost,
+    wsPort,
+    wsRoot,
+    wsUser,
+    wsPass,
+    priceList,
+  } = useAppContext();
   const [isScanning, setIsScanning] = useState(false);
-  const [itemid, setItemid] = useState('');
-  const [labelCode, setLabelCode] = useState('');
-  const [labelDescr, setLabelDescr] = useState('');
-  const [labelBarcode, setLabelBarcode] = useState('');
-  const [labelPrice, setLabelPrice] = useState('');
-  const [labelUnit, setLabelUnit] = useState('');
+  const [itemid, setItemid] = useState("");
+  const [labelCode, setLabelCode] = useState("");
+  const [labelDescr, setLabelDescr] = useState("");
+  const [labelBarcode, setLabelBarcode] = useState("");
+  const [labelPrice, setLabelPrice] = useState("");
+  const [labelUnit, setLabelUnit] = useState("");
   const [isPopupVisible, setIsPopupVisible] = useState(false);
-  const [popupInputValue, setPopupInputValue] = useState('');
+  const [popupInputValue, setPopupInputValue] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 
   const startScanner = () => {
@@ -25,12 +42,12 @@ export default function FirstTab({ selectedType }) {
   };
 
   const handleSave = () => {
-    if (qtyValue === '') {
-      Alert.alert('Σφάλμα', `Δεν επιτρέπεται μηδενική ποσότητα. `, [
+    if (qtyValue === "") {
+      Alert.alert("Σφάλμα", `Δεν επιτρέπεται μηδενική ποσότητα. `, [
         {
-          text: 'Ok',
-          onPress: () => console.error('Error calling API')
-        }
+          text: "Ok",
+          onPress: () => console.error("Error calling API"),
+        },
       ]);
     } else {
       const newItem = {
@@ -39,32 +56,35 @@ export default function FirstTab({ selectedType }) {
         itemName: labelDescr,
         itemNewPrice: newPrice,
         quantity: parseInt(qtyValue, 10) || 0,
-      }
+      };
 
       const updatedData = [...itemData, newItem];
 
       handleQuantityChange(updatedData);
 
-      setLabelCode('');
-      setLabelDescr('');
-      setLabelBarcode('');
-      setLabelPrice('');
-      setLabelUnit('');
-      setQtyValue('');
-      setNewPrice('');
+      setLabelCode("");
+      setLabelDescr("");
+      setLabelBarcode("");
+      setLabelPrice("");
+      setLabelUnit("");
+      setQtyValue("");
+      setNewPrice("");
     }
   };
 
   const handleBarcodeScanned = async (data) => {
-
     setIsScanning(false);
     try {
-      const body = JSON.stringify({ "sql": "select it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price, munit.Descr unit from item it inner join itembarcode ibc on ibc.itemid = it.id left join MATMESUNIT munit on munit.CodeID = ibc.SecUnit_Id outer apply(select top(1) itemid,price, PrLstDim.ValidFromDT, PrLstDim.ValidToDT from ITEMPRLIST ItePrList inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID where prList.CodeID=:0 and itemid=it.id order by prList.type desc, PrLstDim.ValidFromDT) as PrLst where ibc.barcode=:1", "dbfqr": true, "params": [priceList, data] });
+      const body = JSON.stringify({
+        sql: "select it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price, munit.Descr unit from item it inner join itembarcode ibc on ibc.itemid = it.id left join MATMESUNIT munit on munit.CodeID = ibc.SecUnit_Id outer apply(select top(1) itemid,price, PrLstDim.ValidFromDT, PrLstDim.ValidToDT from ITEMPRLIST ItePrList inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID where prList.CodeID=:0 and itemid=it.id order by prList.type desc, PrLstDim.ValidFromDT) as PrLst where ibc.barcode=:1",
+        dbfqr: true,
+        params: [priceList, data],
+      });
       const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(`${wsUser}:${wsPass}`),
+          "Content-Type": "application/json",
+          Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
         },
         body: body,
       });
@@ -75,34 +95,42 @@ export default function FirstTab({ selectedType }) {
         setLabelCode(apiData[0].code);
         setLabelDescr(apiData[0].description);
         setLabelPrice(apiData[0].price);
-        setLabelUnit(apiData[0].unit)
+        setLabelUnit(apiData[0].unit);
         setLabelBarcode(data);
       } else {
-        setLabelCode('Δεν βρέθηκε προϊόν');
-        setLabelDescr('');
-        setLabelPrice('');
-        setLabelUnit('');
+        setLabelCode("Δεν βρέθηκε προϊόν");
+        setLabelDescr("");
+        setLabelPrice("");
+        setLabelUnit("");
         setLabelBarcode(data);
       }
     } catch (error) {
-      Alert.alert('Σφάλμα', `Σφάλμα στην αναζήτηση barcode. Μήνυμα: ${error}. `, [
-        {
-          text: 'Ok',
-          onPress: () => console.error('Error calling API', error)
-        }
-      ]);
+      Alert.alert(
+        "Σφάλμα",
+        `Σφάλμα στην αναζήτηση barcode. Μήνυμα: ${error}. `,
+        [
+          {
+            text: "Ok",
+            onPress: () => console.error("Error calling API", error),
+          },
+        ]
+      );
     }
-  }
+  };
 
   const handleCodeSearch = async (data) => {
     setIsPopupVisible(false);
     try {
-      const body = JSON.stringify({ "sql": "select top(1) it.id, it.code, it.description, cast(isnull(prlst.price, it.Retail_Price) as money) price, ibc.barcode from item it outer apply(select top(1) itemid,price, PrLstDim.ValidFromDT, PrLstDim.ValidToDT from ITEMPRLIST ItePrList inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID where prList.CodeID=:0 and itemid=it.id) as PrLst left join itembarcode ibc on ibc.itemid=it.id where it.code=:1 or ibc.barcode=:2", "dbfqr": true, "params": [priceList, data, data] });
+      const body = JSON.stringify({
+        sql: "select top(1) it.id, it.code, it.description, cast(isnull(prlst.price, it.Retail_Price) as money) price, ibc.barcode from item it outer apply(select top(1) itemid,price, PrLstDim.ValidFromDT, PrLstDim.ValidToDT from ITEMPRLIST ItePrList inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID where prList.CodeID=:0 and itemid=it.id) as PrLst left join itembarcode ibc on ibc.itemid=it.id where it.code=:1 or ibc.barcode=:2",
+        dbfqr: true,
+        params: [priceList, data, data],
+      });
       const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(`${wsUser}:${wsPass}`),
+          "Content-Type": "application/json",
+          Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
         },
         body: body,
       });
@@ -115,28 +143,31 @@ export default function FirstTab({ selectedType }) {
         setLabelPrice(apiData[0].price);
         setLabelBarcode(apiData[0].barcode);
       } else {
-        setLabelCode('Δεν βρέθηκε προϊόν');
-        setLabelDescr('');
-        setLabelPrice('');
-        setLabelUnit('');
-        setLabelBarcode('');
+        setLabelCode("Δεν βρέθηκε προϊόν");
+        setLabelDescr("");
+        setLabelPrice("");
+        setLabelUnit("");
+        setLabelBarcode("");
       }
-
     } catch (error) {
-      Alert.alert('Σφάλμα', `Σφάλμα στην αναζήτηση κωδικού. Μήνυμα: ${error}. `, [
-        {
-          text: 'Ok',
-          onPress: () => console.error('Error calling API', error)
-        }
-      ]);
+      Alert.alert(
+        "Σφάλμα",
+        `Σφάλμα στην αναζήτηση κωδικού. Μήνυμα: ${error}. `,
+        [
+          {
+            text: "Ok",
+            onPress: () => console.error("Error calling API", error),
+          },
+        ]
+      );
     }
-    setPopupInputValue('');
-  }
+    setPopupInputValue("");
+  };
 
   const handleCancelPopup = () => {
-    setPopupInputValue('');
+    setPopupInputValue("");
     setIsPopupVisible(false);
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -171,17 +202,18 @@ export default function FirstTab({ selectedType }) {
             keyboardType="numeric"
           />
         </View>
-        {selectedType === 'receiving' && (
-        <View style={styles.row}>
-          <Text style={styles.caption}>Σχόλια:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Σχόλια..."
-            value={newPrice}
-            onChangeText={(pr) => setNewPrice(pr)}
-            keyboardType="text"
-          />
-        </View>)}
+        {selectedType === "receiving" && (
+          <View style={styles.row}>
+            <Text style={styles.caption}>Σχόλια:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Σχόλια..."
+              value={newPrice}
+              onChangeText={(pr) => setNewPrice(pr)}
+              keyboardType="text"
+            />
+          </View>
+        )}
       </View>
       <View style={styles.buttonContainer}>
         <Pressable onPress={() => setIsPopupVisible(true)}>
@@ -234,7 +266,7 @@ export default function FirstTab({ selectedType }) {
         </View>
       </Modal>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -246,125 +278,125 @@ const styles = StyleSheet.create({
     borderWidth: 0.7,
     borderRadius: 4,
     padding: 4,
-    borderColor: '#b1b1b1',
+    borderColor: "#b1b1b1",
   },
   caption: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginRight: 8,
-    width: '33%'
+    width: "33%",
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
   rowdata: {
     fontSize: 16,
-    textAlign: 'left',
+    textAlign: "left",
     flex: 1,
   },
   inputData: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderRadius: 4,
     borderWidth: 0.5,
     paddingHorizontal: 8,
-    flex: 1
+    flex: 1,
   },
   //Style for buttons
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '110%',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "110%",
+    position: "absolute",
     bottom: 0,
     paddingHorizontal: 15,
     paddingBottom: 16,
   },
   btnCode: {
-    backgroundColor: 'blue',
+    backgroundColor: "blue",
     borderRadius: 8,
-    color: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: "white",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 15,
     paddingHorizontal: 15,
     fontSize: 16,
-    elevation: 8
+    elevation: 8,
   },
   btnScan: {
-    backgroundColor: 'blue',
+    backgroundColor: "blue",
     borderRadius: 8,
-    color: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: "white",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 15,
     paddingHorizontal: 35,
     fontSize: 16,
     elevation: 8,
   },
   btnSave: {
-    backgroundColor: 'green',
+    backgroundColor: "green",
     borderRadius: 8,
-    color: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: "white",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
     fontSize: 16,
-    elevation: 8
+    elevation: 8,
   },
   // Styles for PopUp
   popupContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 16,
   },
   popupDataContainer: {
     borderWidth: 0.7,
     borderRadius: 8,
-    borderColor: '#b1b1b1',
+    borderColor: "#b1b1b1",
     padding: 10,
   },
   popup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonPopupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '95%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "95%",
     paddingHorizontal: 10,
   },
   popupSearchButton: {
-    backgroundColor: 'green',
+    backgroundColor: "green",
     borderRadius: 8,
-    color: 'white',
-    alignItems: 'center',
+    color: "white",
+    alignItems: "center",
     paddingVertical: 15,
     marginTop: 20,
-    width: 100
+    width: 100,
   },
   popupCancelButton: {
-    backgroundColor: 'red',
+    backgroundColor: "red",
     borderRadius: 8,
-    color: 'white',
-    alignItems: 'center',
+    color: "white",
+    alignItems: "center",
     paddingVertical: 15,
     marginTop: 20,
-    width: 100
+    width: 100,
   },
   popupButtonText: {
-    color: 'white',
+    color: "white",
   },
-})
+});

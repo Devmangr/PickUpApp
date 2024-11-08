@@ -6,21 +6,57 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  Pressable,
+  TextInput,
 } from "react-native";
-import AvailabilityModal from "./AvailabilityModal";
+import { useAppContext } from "./AppContext";
 
 const InOutSupTable = ({ combinedData }) => {
+  const { itemData, handleQuantityChange } = useAppContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectdItem, setSelectedItem] = useState(null);
+  const [qtyValue, setQtyValue] = useState("");
+  const [itemid, setItemid] = useState("");
+  const [itemCode, setItemCode] = useState("");
+  const [itemDescr, setItemDescr] = useState("");
+  const [newPrice, setNewPrice] = useState("");
 
   const handleRowPress = (item) => {
     setSelectedItem(item);
     setIsModalVisible(true);
+    setItemid(item.itemid);
+    setItemDescr(item.Description);
+    setItemCode(item.code);
   };
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setSelectedItem(null);
+  };
+
+  const handleSave = () => {
+    if (qtyValue === "") {
+      Alert.alert("Σφάλμα", `Δεν επιτρέπεται μηδενική ποσότητα. `, [
+        {
+          text: "Ok",
+          onPress: () => console.error("Error calling API"),
+        },
+      ]);
+    } else {
+      const newItem = {
+        itemid: itemid,
+        code: itemCode,
+        itemName: itemDescr,
+        //itemNewPrice: newPrice,
+        quantity: parseInt(qtyValue, 10) || 0,
+      };
+
+      const updatedData = [...itemData, newItem];
+
+      handleQuantityChange(updatedData);
+      handleCloseModal();
+      setQtyValue("");
+    }
   };
 
   return (
@@ -60,17 +96,41 @@ const InOutSupTable = ({ combinedData }) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
-      {/* Modal for Availability */}
+      {/* Modal for Orders */}
       <Modal
         transparent={false}
         animationType="slide"
         visible={isModalVisible}
-        onRequestClose={handleCloseModal}
+        onRequestClose={() => setIsModalVisible(false)}
       >
-        <AvailabilityModal
-          selectedItem={selectdItem}
-          onClose={handleCloseModal}
-        />
+        <View style={styles.popupContainer}>
+          <View style={styles.popupDataContainer}>
+            <Text style={{ textAlign: "center", fontSize: 16 }}>
+              Ποσότητα Παραγγελίας.
+            </Text>
+            <View style={styles.row}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ποσότητα..."
+                value={qtyValue}
+                onChangeText={(qty) => setQtyValue(qty)}
+                keyboardType="numeric"
+              />
+            </View>
+            <Pressable style={styles.btn} onPress={() => handleSave()}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  color: "#fff",
+                }}
+              >
+                OK
+              </Text>
+            </Pressable>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -133,6 +193,52 @@ const styles = StyleSheet.create({
   },
   colBal: {
     flex: 0.5, // Στήλες ίδιου μεγέθους για Αγορ., Πωλ., Υπόλ.
+  },
+  buttonContainer: {
+    flex: 1,
+  },
+  btn: {
+    backgroundColor: "green",
+    borderRadius: 8,
+    color: "white",
+    textAlign: "center",
+    paddingVertical: 16,
+    fontSize: 20,
+    fontWeight: "bold",
+    elevation: 8,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderColor: "gray",
+    borderRadius: 4,
+    borderWidth: 0.5,
+    paddingHorizontal: 8,
+  },
+  popupContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  popupDataContainer: {
+    borderWidth: 0.7,
+    borderRadius: 8,
+    borderColor: "#b1b1b1",
+    padding: 10,
+    width: 300,
+  },
+  popup: {
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    marginTop: 10,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
 });
 

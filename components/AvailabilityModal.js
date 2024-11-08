@@ -1,262 +1,275 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
-import { encode as btoa } from 'base-64';
+import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 import AvailabilityGrid from "./AvailabilityGrid";
 
-export default function AvailabilityModal({selectedItem, onClose}) {
-    const { wsHost, wsPort, wsUser, wsPass } = useAppContext();
-    
-    const [labelCode, setLabelCode] = useState('');
-    const [labelDescr, setLabelDescr] = useState('');
-    const [labelBarcode, setLabelBarcode] = useState('');
-    const [combinedData, setCombinedData] = useState([]);
-    const [isPopupVisible, setIsPopupVisible] = useState(false);
-    
-    const API_ENDPOINT = `http://${wsHost}:${wsPort}/root/DBDataSetValues`;
-    const API_ENDPOINTOE = `http://${wsHost}:${wsPort}/oe/DBDataSetValues`;
-    const API_ENDPOINTZER = `http://${wsHost}:${wsPort}/zer/DBDataSetValues`;
+export default function AvailabilityModal({ selectedItem, onClose }) {
+  const { wsHost, wsPort, wsUser, wsPass } = useAppContext();
 
-    const handleCodeSearch = async (data) => {
-        setIsPopupVisible(false);
-        
-        const body = JSON.stringify({ "sql": "declare @bc varchar(30) =:0; exec codesearch @code=@bc", "dbfqr": true, "params": [data] });
-        try {
-            const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
-            
-            const [response1, response2, response3] = await Promise.all(
-                endpoints.map(endpoint => fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa(`${wsUser}:${wsPass}`),
-                    },
-                    body: body,
-                }))
-            );
+  const [labelCode, setLabelCode] = useState("");
+  const [labelDescr, setLabelDescr] = useState("");
+  const [labelBarcode, setLabelBarcode] = useState("");
+  const [combinedData, setCombinedData] = useState([]);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
 
-            const [data1, data2, data3] = await Promise.all([response1.json(), response2.json(), response3.json()]);
+  const API_ENDPOINT = `http://${wsHost}:${wsPort}/root/DBDataSetValues`;
+  const API_ENDPOINTOE = `http://${wsHost}:${wsPort}/oe/DBDataSetValues`;
+  const API_ENDPOINTZER = `http://${wsHost}:${wsPort}/zer/DBDataSetValues`;
 
-            const combinedData = [
-                ...(Array.isArray(data1) ? data1 : []),
-                ...(Array.isArray(data2) ? data2 : []),
-                ...(Array.isArray(data3) ? data3 : [])
-            ];
+  const handleCodeSearch = async (data) => {
+    setIsPopupVisible(false);
 
-            if (combinedData.length > 0) {
-                setLabelCode(combinedData[0].code);
-                setLabelDescr(combinedData[0].description);
-                setLabelBarcode(data);
-                setCombinedData(combinedData);
-            } else {
-                setLabelCode('Δεν βρέθηκε προϊόν');
-                setLabelDescr('');
-                setLabelBarcode(data);
-                setCombinedData([]);
-            }
+    const body = JSON.stringify({
+      sql: "declare @bc varchar(30) =:0; exec codesearch @code=@bc",
+      dbfqr: true,
+      params: [data],
+    });
+    try {
+      const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
 
-        } catch (error) {
-            Alert.alert('Σφάλμα', `Σφάλμα στην αναζήτηση κωδικού. Μήνυμα: ${error}. `, [
-                {
-                    text: 'Ok',
-                    onPress: () => console.error('Error calling API', error)
-                }
-            ]);
-        }
+      const [response1, response2, response3] = await Promise.all(
+        endpoints.map((endpoint) =>
+          fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
+            },
+            body: body,
+          })
+        )
+      );
+
+      const [data1, data2, data3] = await Promise.all([
+        response1.json(),
+        response2.json(),
+        response3.json(),
+      ]);
+
+      const combinedData = [
+        ...(Array.isArray(data1) ? data1 : []),
+        ...(Array.isArray(data2) ? data2 : []),
+        ...(Array.isArray(data3) ? data3 : []),
+      ];
+
+      if (combinedData.length > 0) {
+        setLabelCode(combinedData[0].code);
+        setLabelDescr(combinedData[0].description);
+        setLabelBarcode(data);
+        setCombinedData(combinedData);
+      } else {
+        setLabelCode("Δεν βρέθηκε προϊόν");
+        setLabelDescr("");
+        setLabelBarcode(data);
+        setCombinedData([]);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Σφάλμα",
+        `Σφάλμα στην αναζήτηση κωδικού. Μήνυμα: ${error}. `,
+        [
+          {
+            text: "Ok",
+            onPress: () => console.error("Error calling API", error),
+          },
+        ]
+      );
     }
+  };
 
-    useEffect(() => {
-        if (selectedItem) {
-            handleCodeSearch(selectedItem.code);
-        }
-    },[selectedItem]);
+  useEffect(() => {
+    if (selectedItem) {
+      handleCodeSearch(selectedItem.code);
+    }
+  }, [selectedItem]);
 
-    return (
-        <View style={styles.container}> 
-            <View style={styles.contentContainer}>
-                <View style={styles.row}>
-                    <Text style={styles.caption}>Κωδικός:</Text>
-                    <Text style={styles.rowdata}>{labelCode}</Text>
-                </View>
-                <View style={styles.row}>
-                    <Text style={styles.caption}>Περιγραφή:</Text>
-                    <Text style={styles.rowdata}>{labelDescr}</Text>
-                </View>
-                <View style={styles.row}>
-                    <Text style={styles.caption}>Barcode:</Text>
-                    <Text style={styles.rowdata}>{labelBarcode}</Text>
-                </View>
-            </View>
-            {/* Show store availability */}
-            <View style={styles.contentContainerStores}>
-                <View style={styles.rowHead}>
-                    <Text style={styles.captionHead}>Διαθ. Καταστημάτων</Text>
-                </View>
-                <AvailabilityGrid combinedData={combinedData} />
-            </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <Text style={styles.closeButtonText}>Κλείσιμο</Text>
-            </TouchableOpacity>
+  return (
+    <View style={styles.container}>
+      <View style={styles.contentContainer}>
+        <View style={styles.row}>
+          <Text style={styles.caption}>Κωδικός:</Text>
+          <Text style={styles.rowdata}>{labelCode}</Text>
         </View>
-    )
+        <View style={styles.row}>
+          <Text style={styles.caption}>Περιγραφή:</Text>
+          <Text style={styles.rowdata}>{labelDescr}</Text>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.caption}>Barcode:</Text>
+          <Text style={styles.rowdata}>{labelBarcode}</Text>
+        </View>
+      </View>
+      {/* Show store availability */}
+      <View style={styles.contentContainerStores}>
+        <View style={styles.rowHead}>
+          <Text style={styles.captionHead}>Διαθ. Καταστημάτων</Text>
+        </View>
+        <AvailabilityGrid combinedData={combinedData} />
+      </View>
+      <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+        <Text style={styles.closeButtonText}>Κλείσιμο</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    contentContainer: {
-        borderWidth: 0.7,
-        borderRadius: 4,
-        padding: 4,
-        borderColor: '#b1b1b1',
-    },
-    contentContainerStores: {
-        padding: 4,
-        marginTop: 10,
-        flex:1,        
-    },
-    caption: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginRight: 8,
-        width: '33%',
-    },
-    captionHead: {
-        fontSize: 18,
-        fontWeight: '600',
-        marginRight: 8,
-        textAlign:'center'
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    rowHead:{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    rowdata: {
-        fontSize: 16,
-        textAlign: 'left',
-        flex: 1,
-    },
-    inputData: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 10
-    },
-    input: {
-        height: 40,
-        borderColor: 'gray',
-        borderRadius: 4,
-        borderWidth: 0.5,
-        paddingHorizontal: 8,
-        flex: 1
-    },
-    //Style for buttons
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '110%',
-        position: 'absolute',
-        bottom: 0,
-        paddingHorizontal: 15,
-        paddingBottom: 16,
-    },
-    btnCode: {
-        backgroundColor: 'blue',
-        borderRadius: 8,
-        color: 'white',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 15,
-        fontSize: 16,
-        elevation: 8
-    },
-    btnScan: {
-        backgroundColor: 'blue',
-        borderRadius: 8,
-        color: 'white',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 35,
-        fontSize: 16,
-        elevation: 8,
-    },
-    btnSave: {
-        backgroundColor: 'green',
-        borderRadius: 8,
-        color: 'white',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        fontSize: 16,
-        elevation: 8
-    },
-    // Styles for PopUp
-    popupContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 16,
-    },
-    popupDataContainer: {
-        borderWidth: 0.7,
-        borderRadius: 8,
-        borderColor: '#b1b1b1',
-        padding: 10,
-    },
-    popup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    buttonPopupContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '95%',
-        paddingHorizontal: 10,
-    },
-    popupSearchButton: {
-        backgroundColor: 'green',
-        borderRadius: 8,
-        color: 'white',
-        alignItems: 'center',
-        paddingVertical: 15,
-        marginTop: 20,
-        width: 100
-    },
-    popupCancelButton: {
-        backgroundColor: 'red',
-        borderRadius: 8,
-        color: 'white',
-        alignItems: 'center',
-        paddingVertical: 15,
-        marginTop: 20,
-        width: 100
-    },
-    popupButtonText: {
-        color: 'white',
-    },
-    closeButton: {
-        marginTop: 20,
-        backgroundColor: 'red',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-    },
-    closeButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign:'center'
-    },
-})
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  contentContainer: {
+    borderWidth: 0.7,
+    borderRadius: 4,
+    padding: 4,
+    borderColor: "#b1b1b1",
+  },
+  contentContainerStores: {
+    padding: 4,
+    marginTop: 10,
+    flex: 1,
+  },
+  caption: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginRight: 8,
+    width: "33%",
+  },
+  captionHead: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginRight: 8,
+    textAlign: "center",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  rowHead: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  rowdata: {
+    fontSize: 16,
+    textAlign: "left",
+    flex: 1,
+  },
+  inputData: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  input: {
+    height: 40,
+    borderColor: "gray",
+    borderRadius: 4,
+    borderWidth: 0.5,
+    paddingHorizontal: 8,
+    flex: 1,
+  },
+  //Style for buttons
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "110%",
+    position: "absolute",
+    bottom: 0,
+    paddingHorizontal: 15,
+    paddingBottom: 16,
+  },
+  btnCode: {
+    backgroundColor: "blue",
+    borderRadius: 8,
+    color: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    elevation: 8,
+  },
+  btnScan: {
+    backgroundColor: "blue",
+    borderRadius: 8,
+    color: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 35,
+    fontSize: 16,
+    elevation: 8,
+  },
+  btnSave: {
+    backgroundColor: "green",
+    borderRadius: 8,
+    color: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    elevation: 8,
+  },
+  // Styles for PopUp
+  popupContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  popupDataContainer: {
+    borderWidth: 0.7,
+    borderRadius: 8,
+    borderColor: "#b1b1b1",
+    padding: 10,
+  },
+  popup: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonPopupContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "95%",
+    paddingHorizontal: 10,
+  },
+  popupSearchButton: {
+    backgroundColor: "green",
+    borderRadius: 8,
+    color: "white",
+    alignItems: "center",
+    paddingVertical: 15,
+    marginTop: 20,
+    width: 100,
+  },
+  popupCancelButton: {
+    backgroundColor: "red",
+    borderRadius: 8,
+    color: "white",
+    alignItems: "center",
+    paddingVertical: 15,
+    marginTop: 20,
+    width: 100,
+  },
+  popupButtonText: {
+    color: "white",
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "red",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+});
