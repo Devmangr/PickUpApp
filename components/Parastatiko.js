@@ -172,7 +172,7 @@ const ParastatikoDetail = ({ selectedType }) => {
       bo: selectedType === "inventory" ? "TSTORETRNBO" : "TPURCHASETRNBO",
       data: data,
     };
-    if (selectedType === "returning") {
+    if (selectedType === "returning" || selectedType === "ordersup") {
       jsonData.doprint = 2;
     }
     sendPurchase(jsonData);
