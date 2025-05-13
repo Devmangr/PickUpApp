@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
   TextInput,
 } from "react-native";
 import { useAppContext } from "./AppContext";
+import { encode as btoa } from "base-64";
 
-const InOutSupTable = ({ combinedData }) => {
+const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
   const { itemData, handleQuantityChange } = useAppContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectdItem, setSelectedItem] = useState(null);
@@ -20,6 +21,11 @@ const InOutSupTable = ({ combinedData }) => {
   const [itemCode, setItemCode] = useState("");
   const [itemDescr, setItemDescr] = useState("");
   const [newPrice, setNewPrice] = useState("");
+  const [orderedItems, setOrderedItems] = useState([]);
+  
+const { wsHost, wsPort, wsRoot, wsUser, wsPass } = useAppContext();
+const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
+
 
   const handleRowPress = (item) => {
     setSelectedItem(item);
@@ -28,6 +34,63 @@ const InOutSupTable = ({ combinedData }) => {
     setItemDescr(item.Description);
     setItemCode(item.code);
   };
+
+  useEffect(() => {
+    const fetchItemByBarcode = async (barcode) => {
+      try {
+        const body = JSON.stringify({
+          sql: `
+            select it.id, it.code, it.description 
+            from item it 
+            inner join itembarcode ibc on ibc.itemid = it.id 
+            where ibc.barcode=:0
+          `,
+          dbfqr: true,
+          params: [barcode],
+        });
+  
+        const response = await fetch(API_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
+          },
+          body: body,
+        });
+  
+        const data = await response.json();
+  
+        if (data && data.length > 0) {
+          const item = data[0];
+  
+          const alreadyExists = orderedItems.includes(item.id);
+  
+          setItemid(item.id);
+          setItemCode(item.code);
+          setItemDescr(item.description);
+          setSelectedItem(item);
+          setIsModalVisible(true);
+  
+          // Αν υπάρχει, δεν προσθέτουμε, απλώς ανοίγουμε modal για να ενημερωθεί ποσότητα
+          if (!alreadyExists) {
+            setOrderedItems((prev) => [...prev, item.id]);
+          }
+        } else {
+          alert(`Δεν βρέθηκε προϊόν με barcode: ${barcode}`);
+        }
+      } catch (error) {
+        alert("Σφάλμα κατά την αναζήτηση του barcode.");
+        console.error("Barcode fetch error", error);
+      } finally {
+        clearScannedCode();
+      }
+    };
+  
+    if (scannedCode) {
+      fetchItemByBarcode(scannedCode);
+    }
+  }, [scannedCode]);
+  
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
@@ -50,14 +113,24 @@ const InOutSupTable = ({ combinedData }) => {
         //itemNewPrice: newPrice,
         quantity: parseInt(qtyValue, 10) || 0,
       };
-
+      
       const updatedData = [...itemData, newItem];
-
+            
       handleQuantityChange(updatedData);
+      setOrderedItems((prev) => [...prev, itemid]);
       handleCloseModal();
       setQtyValue("");
     }
   };
+
+  const handleRemoveItem = () => {
+    const updatedData = itemData.filter((item) => item.itemid !== itemid);
+    handleQuantityChange(updatedData);
+
+    setOrderedItems((prev) => prev.filter((id) => id !== itemid));
+    handleCloseModal();
+  };
+
 
   return (
     <View style={styles.tableContainer}>
@@ -76,7 +149,7 @@ const InOutSupTable = ({ combinedData }) => {
       <ScrollView>
         {combinedData.map((item, index) => (
           <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
-            <View key={index} style={styles.tableRow}>
+            <View key={index} style={[styles.tableRow, orderedItems.includes(item.itemid) && styles.orderedRow]}>
               <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
                 {item.code}
               </Text>
@@ -129,6 +202,14 @@ const InOutSupTable = ({ combinedData }) => {
                 OK
               </Text>
             </Pressable>
+            {orderedItems.includes(itemid) && (
+              <Pressable
+                style={[styles.btn, { backgroundColor: "red", marginTop: 10 }]}
+                onPress={handleRemoveItem}
+              >
+                <Text style={styles.btnText}>Αφαίρεση</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </Modal>
@@ -240,6 +321,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
+  orderedRow : {
+    backgroundColor: "#d0f0c0"
+  },
+  btnText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+
 });
 
 export default InOutSupTable;

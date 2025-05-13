@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Button, Text, TextInput, StyleSheet } from "react-native";
+import { View, Button, Text, TextInput, StyleSheet, Modal } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 import InOutSupTable from "./InOutOrder";
+import BarcodeComponent from "./scanner";
 
 export default function OrderSup() {
   const { wsHost, wsPort, wsRoot, wsUser, wsPass, branch, updateSelectSup } =
@@ -19,8 +20,9 @@ export default function OrderSup() {
   const [showDatePicker2, setShowDatePicker2] = useState(false);
   const [btnLoading, setBtnLoading] = useState(false);
   const [supplierDropdownData, setSupplierDropdownData] = useState([]);
-  const [selectedSupplierDropdown, setSelectedSupplierDropdown] =
-    useState(null);
+  const [selectedSupplierDropdown, setSelectedSupplierDropdown] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedCode, setScannedCode] = useState(null);
 
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 
@@ -76,7 +78,7 @@ export default function OrderSup() {
         });
         const textData = await response.text();
         const newData = JSON.parse(textData);
-        //console.log('Parsed Data:', newData);
+        
         setBtnLoading(false);
 
         if (Array.isArray(newData)) {
@@ -190,10 +192,30 @@ export default function OrderSup() {
             >
               {btnLoading ? "Loading..." : "Αναζήτηση"}
             </Button>
+            <Button
+              title="Scan"
+              onPress={() => setIsScanning(true)}
+              color="blue"
+            >
+            </Button>
           </View>
         </View>
       </View>
-      <InOutSupTable combinedData={returnedData} />
+      <InOutSupTable 
+        combinedData={returnedData} 
+        scannedCode={scannedCode}
+        clearScannedCode={() => setScannedCode(null)}
+      />
+      {isScanning && (
+        <Modal visible={true} animationType="slide">
+          <BarcodeComponent
+            onBarCodeScanned={(code) => {
+              setIsScanning(false);
+              setScannedCode(code); // 👉 περνάμε το code στο table
+            }}
+          />
+        </Modal>
+      )}
     </View>
   );
 }
@@ -227,6 +249,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   btn: {
     backgroundColor: "green",

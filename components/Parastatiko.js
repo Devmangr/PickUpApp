@@ -26,6 +26,7 @@ const ParastatikoDetail = ({ selectedType }) => {
     handleQuantityChange,
     selectSup,
   } = useAppContext();
+  const [remarks, setRemarks] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
   const [btnLoading, setBtnLoading] = useState(false);
 
@@ -51,11 +52,14 @@ const ParastatikoDetail = ({ selectedType }) => {
     setDocnumber("");
     setSelectedSupplierId(null);
     setSeriecode("");
+    setRemarks("");
     setSelectedDate(new Date());
     handleQuantityChange([]);
   };
 
   const sendPurchase = async (jsonData) => {
+    //console.log('Itemdata: ', itemData);
+    //console.log('Data to send: ',JSON.stringify(jsonData));
     setBtnLoading(true);
     const url = `http://${wsHost}:${wsPort}/${wsRoot}/ApplyBOData`;
     try {
@@ -141,6 +145,7 @@ const ParastatikoDetail = ({ selectedType }) => {
           : 70,
       seriecode: selectedType === "receiving" ? seriesT : seriesM,
       docdate: selectedDate.toISOString().split("T")[0],
+      comment: remarks,
       Itetrn: itemData.map((item) => ({
         itemid: item.itemid,
         priqty: item.quantity,
@@ -150,7 +155,7 @@ const ParastatikoDetail = ({ selectedType }) => {
         discval3: 0.0,
       })),
     };
-
+    //console.log('Data before send: ', data);
     if (
       selectedType === "receiving" ||
       selectedType === "returning" ||
@@ -235,6 +240,19 @@ const ParastatikoDetail = ({ selectedType }) => {
             placeholder="Σειρά.."
             value={seriecode || "."}
             onChangeText={(text) => setSeriecode(text)}
+          />
+        </View>
+      )}
+      {selectedType === "ordersup" && (
+        <View style={styles.row}>
+          <Text style={[styles.caption, styles.alignRight]}>Παρατηρήσεις:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Παρατηρήσεις..."
+            value={remarks}
+            onChangeText={(text) => setRemarks(text)}
+            multiline
+            numberOfLines={3}
           />
         </View>
       )}
