@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  TextInput,
-} from "react-native";
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput} from "react-native";
 import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
 
 const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
-  const { itemData, handleQuantityChange } = useAppContext();
+  const { itemData, handleQuantityChange, priceList } = useAppContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectdItem, setSelectedItem] = useState(null);
   const [qtyValue, setQtyValue] = useState("");
@@ -39,14 +30,9 @@ const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
     const fetchItemByBarcode = async (barcode) => {
       try {
         const body = JSON.stringify({
-          sql: `
-            select it.id, it.code, it.description 
-            from item it 
-            inner join itembarcode ibc on ibc.itemid = it.id 
-            where ibc.barcode=:0
-          `,
+          sql: "select it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price, munit.Descr unit from item it inner join itembarcode ibc on ibc.itemid = it.id left join MATMESUNIT munit on munit.CodeID = ibc.SecUnit_Id outer apply(select top(1) itemid,price, PrLstDim.ValidFromDT, PrLstDim.ValidToDT from ITEMPRLIST ItePrList inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID where prList.CodeID=:0 and itemid=it.id order by prList.type desc, PrLstDim.ValidFromDT) as PrLst where ibc.barcode=:1",
           dbfqr: true,
-          params: [barcode],
+          params: [priceList, barcode],
         });
   
         const response = await fetch(API_ENDPOINT, {

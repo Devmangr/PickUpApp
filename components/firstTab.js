@@ -16,16 +16,7 @@ import { useAppContext } from "./AppContext";
 export default function FirstTab({ selectedType }) {
   const [qtyValue, setQtyValue] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const {
-    itemData,
-    handleQuantityChange,
-    wsHost,
-    wsPort,
-    wsRoot,
-    wsUser,
-    wsPass,
-    priceList,
-  } = useAppContext();
+  const {itemData, handleQuantityChange, wsHost, wsPort, wsRoot, wsUser, wsPass, priceList} = useAppContext();
   const [isScanning, setIsScanning] = useState(false);
   const [itemid, setItemid] = useState("");
   const [labelCode, setLabelCode] = useState("");
