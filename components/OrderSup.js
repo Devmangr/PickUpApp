@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { View, Button, Text, TextInput, StyleSheet, Modal } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 import InOutSupTable from "./InOutOrder";
 import BarcodeComponent from "./scanner";
+import { Dropdown } from 'react-native-element-dropdown';
 
 export default function OrderSup() {
   const { wsHost, wsPort, wsRoot, wsUser, wsPass, branch, updateSelectSup } =
@@ -20,10 +20,10 @@ export default function OrderSup() {
   const [showDatePicker2, setShowDatePicker2] = useState(false);
   const [btnLoading, setBtnLoading] = useState(false);
   const [supplierDropdownData, setSupplierDropdownData] = useState([]);
-  const [selectedSupplierDropdown, setSelectedSupplierDropdown] = useState(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState(null);
-
+  
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 
   const fetchSuppliers = async () => {
@@ -61,7 +61,7 @@ export default function OrderSup() {
           sql: "declare @val varchar(max); declare @amid int=:0; declare @branchId int=:1; declare @dtFrom varchar(30)=:2; declare @dtTo varchar(30)=:3; exec inoutsup @amid, @branchId, @dtFrom, @dtTo, @val output;",
           dbfqr: false,
           params: [
-            selectedSupplierDropdown,
+            selectedSupplierId,
             branch,
             fromDate.toISOString().split("T")[0],
             toDate.toISOString().split("T")[0],
@@ -129,24 +129,20 @@ export default function OrderSup() {
     <View style={styles.container}>
       <View style={styles.headContainer}>
         <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Προμηθευτής:</Text>
-          <Picker
-            style={styles.input}
-            selectedValue={selectedSupplierDropdown}
-            onValueChange={(itemValue) => {
-              setSelectedSupplierDropdown(itemValue),
-                updateSelectSup(itemValue);
+          <Dropdown
+            style={styles.dropdown}
+            data={supplierDropdownData.map((sup) => ({ label: sup.name, value: sup.id }))}
+            search
+            labelField="label"
+            valueField="value"
+            placeholder="Επιλογή Προμηθευτή"
+            searchPlaceholder="Αναζήτηση..."
+            value={selectedSupplierId}
+            onChange={(item) => {
+              setSelectedSupplierId(item.value),
+              updateSelectSup(item.value);
             }}
-            onFocus={() => handleFocus(true)}
-          >
-            {supplierDropdownData.map((supplier) => (
-              <Picker.Item
-                key={supplier.id}
-                label={supplier.name}
-                value={supplier.id}
-              />
-            ))}
-          </Picker>
+          />
         </View>
         <View style={styles.row}>
           <Text style={[styles.caption, styles.alignRight]}>Από:</Text>
@@ -262,4 +258,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     elevation: 8,
   },
+  dropdown: {
+    flex:1,
+    height: 50,
+    borderColor: 'gray',
+    borderWidth: 0.5,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+  },
+
 });

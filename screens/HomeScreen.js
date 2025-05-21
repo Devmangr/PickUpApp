@@ -13,7 +13,16 @@ const HomeScreen = ({ navigation }) => {
       navigation.navigate("Πληροφορίες Είδους");
     } else if (type === "ordersup") {
       navigation.navigate("Παραγγελία", { selectedType: type });
-    } else {
+    } else if (type === "intmovement") {
+      navigation.navigate('Εσ. Διακίνηση', { selectedType: type});
+    } else if (type === "receiving") {
+      navigation.navigate('Παραλαβή Προϊόντων', { selectedType: type});
+    } else if (type === "returning") {
+      navigation.navigate('Επιστροφή Προϊόντων', { selectedType: type});
+    } else if (type === "inventory") {
+      navigation.navigate('Απογραφή Προϊόντων', { selectedType: type});
+    } 
+    else { 
       navigation.navigate("Main", { selectedType: type });
     }
   };
@@ -62,6 +71,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => handleSelection("ordersup")}
         >
           <Text style={styles.buttonText}>Παραγγελία</Text>
+        </Pressable>
+        <Pressable
+          style={styles.button}
+          onPress={() => handleSelection("intmovement")}
+        >
+          <Text style={styles.buttonText}>Εσ. Διακίνηση</Text>
         </Pressable>
         <Pressable
           style={styles.button}

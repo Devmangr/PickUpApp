@@ -1,14 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import {View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert} from "react-native";
 import BarcodeComponent from "./scanner";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";

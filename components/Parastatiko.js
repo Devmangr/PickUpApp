@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, Alert, Button } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
@@ -10,25 +10,23 @@ const ParastatikoDetail = ({ selectedType }) => {
   const [seriecode, setSeriecode] = useState("");
   const [docnumber, setDocnumber] = useState("");
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
-  const [suppliers, setSuppliers] = useState([]);
+  const [supplierDropdownData, setSupplierDropdownData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const {
-    itemData,
-    wsHost,
-    wsPort,
-    wsRoot,
-    wsUser,
-    wsPass,
-    seriesM,
-    seriesT,
-    branch,
-    handleQuantityChange,
-    selectSup,
-  } = useAppContext();
+  const {itemData, wsHost, wsPort, wsRoot, wsUser, wsPass, seriesM, seriesT, branch, handleQuantityChange, selectSup} = useAppContext();
   const [remarks, setRemarks] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
   const [btnLoading, setBtnLoading] = useState(false);
+  const [stores, setStores] = useState([
+    {id:1 , name: "Hellas"},
+    {id:2 , name: "Princess"},
+    {id:3 , name: "Aegean"},
+    {id:4 , name: "Imperial"},
+    {id:5 , name: "Village"},
+    {id:6 , name: "Park"},
+    {id:7 , name: "Kolympia"},
+  ]);
+  const [selectedStoreId, setSelectedStoreId] = useState(null);
 
   const handleDateChange = (event, date) => {
     setShowDatePicker(false);
@@ -58,8 +56,6 @@ const ParastatikoDetail = ({ selectedType }) => {
   };
 
   const sendPurchase = async (jsonData) => {
-    //console.log('Itemdata: ', itemData);
-    //console.log('Data to send: ',JSON.stringify(jsonData));
     setBtnLoading(true);
     const url = `http://${wsHost}:${wsPort}/${wsRoot}/ApplyBOData`;
     try {
@@ -123,7 +119,7 @@ const ParastatikoDetail = ({ selectedType }) => {
         body: body,
       });
       const apiData = await response.json();
-      setSuppliers(apiData);
+      setSupplierDropdownData(apiData);
     } catch (error) {
       console.error("Error fetching suppliers", error);
     }
@@ -185,20 +181,37 @@ const ParastatikoDetail = ({ selectedType }) => {
 
   return (
     <View style={styles.container}>
-      {selectedType != "inventory" && selectedType != "ordersup" && (
+      {selectedType != "inventory" && selectedType != "ordersup" && selectedType != "intmovement" && (
         <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Προμηθευτής:</Text>
+          <Dropdown
+            style={styles.dropdown}
+            data={supplierDropdownData.map((sup) => ({ label: sup.name, value: sup.id }))}
+            search
+            labelField="label"
+            valueField="value"
+            placeholder="Επιλογή Προμηθευτή"
+            searchPlaceholder="Αναζήτηση..."
+            value={selectedSupplierId}
+            onChange={(item) => {
+              setSelectedSupplierId(item.value),
+              updateSelectSup(item.value);
+            }}
+          />
+        </View>
+      )}
+      {selectedType === "intmovement" && (
+        <View style={styles.row}>
+          <Text style={[styles.caption, styles.alignRight]}>Κατάστημα:</Text>
           <Picker
             style={styles.input}
-            selectedValue={selectedSupplierId}
-            onValueChange={(itemValue) => setSelectedSupplierId(itemValue)}
-            onFocus={() => handleFocus(true)}
+            selectedValue={selectedStoreId}
+            onValueChange={(itemValue) => setSelectedStoreId(itemValue)}
           >
-            {suppliers.map((supplier) => (
+            {stores.map((store) => (
               <Picker.Item
-                key={supplier.id}
-                label={supplier.name}
-                value={supplier.id}
+                key={store.id}
+                label={store.name}
+                value={store.id}
               />
             ))}
           </Picker>
@@ -310,6 +323,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     elevation: 8,
+  },
+    dropdown: {
+    flex:1,
+    height: 50,
+    borderColor: 'gray',
+    borderWidth: 0.5,
+    borderRadius: 4,
+    paddingHorizontal: 8,
   },
 });
 export default ParastatikoDetail;

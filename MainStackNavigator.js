@@ -21,6 +21,10 @@ const MainStackNavigator = () => {
       <Stack.Screen name="Αγορές - Πωλήσεις" component={InOutSup} />
       <Stack.Screen name="Πληροφορίες Είδους" component={ItemInfo} />
       <Stack.Screen name="Παραγγελία" component={OrderScreen} />
+      <Stack.Screen name="Εσ. Διακίνηση" component={TabViewExample} />
+      <Stack.Screen name="Παραλαβή Προϊόντων" component={TabViewExample} />
+      <Stack.Screen name="Επιστροφή Προϊόντων" component={TabViewExample} />
+      <Stack.Screen name="Απογραφή Προϊόντων" component={TabViewExample} />
     </Stack.Navigator>
   );
 };

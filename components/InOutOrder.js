@@ -4,18 +4,20 @@ import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
 
 const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
-  const { itemData, handleQuantityChange, priceList } = useAppContext();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectdItem, setSelectedItem] = useState(null);
-  const [qtyValue, setQtyValue] = useState("");
-  const [itemid, setItemid] = useState("");
-  const [itemCode, setItemCode] = useState("");
-  const [itemDescr, setItemDescr] = useState("");
-  const [newPrice, setNewPrice] = useState("");
-  const [orderedItems, setOrderedItems] = useState([]);
-  
+const { itemData, handleQuantityChange, priceList } = useAppContext();
+const [isModalVisible, setIsModalVisible] = useState(false);
+const [selectdItem, setSelectedItem] = useState(null);
+const [qtyValue, setQtyValue] = useState("");
+const [itemid, setItemid] = useState("");
+const [itemCode, setItemCode] = useState("");
+const [itemDescr, setItemDescr] = useState("");
+const [orderedItems, setOrderedItems] = useState([]);
+const [searchText, setSearchText] = useState("");
 const { wsHost, wsPort, wsRoot, wsUser, wsPass } = useAppContext();
 const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
+const filteredData = combinedData.filter(item =>
+  item.Description.toLowerCase().includes(searchText.toLowerCase())
+);
 
 
   const handleRowPress = (item) => {
@@ -130,11 +132,25 @@ const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
         <Text style={[styles.headerText, styles.colOutqty]}>Πωλ.</Text>
         <Text style={[styles.headerText, styles.colBal]}>Υπόλ.</Text>
       </View>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Αναζήτηση περιγραφής..."
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+      </View>
 
       {/* Table Rows */}
       <ScrollView>
-        {combinedData.map((item, index) => (
+        {filteredData.map((item, index) => (
           <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
+            <View
+              style={[
+                styles.tableRow,
+                orderedItems.includes(item.itemid) && styles.orderedRow,
+              ]}
+            >
             <View key={index} style={[styles.tableRow, orderedItems.includes(item.itemid) && styles.orderedRow]}>
               <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
                 {item.code}
@@ -151,6 +167,7 @@ const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
               <Text style={[styles.cellTextBalance, styles.colBal]}>
                 {item.bal}
               </Text>
+            </View>
             </View>
           </TouchableOpacity>
         ))}
@@ -316,6 +333,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
   },
+searchContainer: {
+  marginBottom: 8,
+  
+},
+searchInput: {
+  height: 60,
+  borderColor: "#ccc",
+  borderWidth: 1,
+  borderRadius: 4,
+  paddingHorizontal: 8,
+},
 
 });
 
