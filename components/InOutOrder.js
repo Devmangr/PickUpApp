@@ -19,7 +19,7 @@ const filteredData = combinedData.filter(item =>
   item.Description.toLowerCase().includes(searchText.toLowerCase())
 );
 
-
+ 
   const handleRowPress = (item) => {
     setSelectedItem(item);
     setIsModalVisible(true);
@@ -145,13 +145,7 @@ const filteredData = combinedData.filter(item =>
       <ScrollView>
         {filteredData.map((item, index) => (
           <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
-            <View
-              style={[
-                styles.tableRow,
-                orderedItems.includes(item.itemid) && styles.orderedRow,
-              ]}
-            >
-            <View key={index} style={[styles.tableRow, orderedItems.includes(item.itemid) && styles.orderedRow]}>
+            <View key={index} style={[styles.tableRow, orderedItems.includes(item.itemid) && styles.orderedRow,]}>
               <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
                 {item.code}
               </Text>
@@ -167,7 +161,6 @@ const filteredData = combinedData.filter(item =>
               <Text style={[styles.cellTextBalance, styles.colBal]}>
                 {item.bal}
               </Text>
-            </View>
             </View>
           </TouchableOpacity>
         ))}
@@ -248,7 +241,6 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     paddingVertical: 10,
     paddingHorizontal: 5,
-    height:40,
   },
   cellText: {
     flex: 1,
