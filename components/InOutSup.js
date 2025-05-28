@@ -136,7 +136,7 @@ const InOutSup = () => {
             value={selectedSupplierId}
             onChange={(item) => {
               setSelectedSupplierId(item.value);
-            }}
+            }} 
           />
         </View>
         <View style={styles.row}>

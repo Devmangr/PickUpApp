@@ -12,7 +12,7 @@ const ParastatikoDetail = ({ selectedType }) => {
   const [supplierDropdownData, setSupplierDropdownData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const {itemData, wsHost, wsPort, wsRoot, wsUser, wsPass, seriesM, seriesT, branch, handleQuantityChange, selectSup} = useAppContext();
+  const {itemData, wsHost, wsPort, wsRoot, wsUser, wsPass, seriesM, seriesT, branch, handleQuantityChange, selectSup, updateSelectSup} = useAppContext();
   const [remarks, setRemarks] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
   const [btnLoading, setBtnLoading] = useState(false);
