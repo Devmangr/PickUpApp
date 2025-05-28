@@ -31,7 +31,7 @@ const GridComponent = () => {
             data={tableData}
             widthArr={widthArr}
             style={styles.rowText}
-            textStyle={styles.textstyle}
+            textStyle={styles.textstyles}
           />
         </Table>
       </View>
@@ -40,7 +40,7 @@ const GridComponent = () => {
 };
 
 const styles = StyleSheet.create({
-  textstyle: { fontSize: 12, fontWeight: 600 },
+  textstyles: { fontSize: 12, fontWeight: 600 },
   container: {
     flex: 1,
     padding: 14,

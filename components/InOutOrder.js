@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     paddingVertical: 10,
     paddingHorizontal: 5,
+    height:40,
   },
   cellText: {
     flex: 1,
@@ -338,7 +339,7 @@ searchContainer: {
   
 },
 searchInput: {
-  height: 60,
+  height: 40,
   borderColor: "#ccc",
   borderWidth: 1,
   borderRadius: 4,

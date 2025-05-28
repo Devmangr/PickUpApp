@@ -6,7 +6,6 @@ import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
 
 const ParastatikoDetail = ({ selectedType }) => {
-  const [isPickerFocused, setIsPickerFocused] = useState(false);
   const [seriecode, setSeriecode] = useState("");
   const [docnumber, setDocnumber] = useState("");
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
@@ -18,15 +17,18 @@ const ParastatikoDetail = ({ selectedType }) => {
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
   const [btnLoading, setBtnLoading] = useState(false);
   const [stores, setStores] = useState([
-    {id:1 , name: "Hellas"},
-    {id:2 , name: "Princess"},
-    {id:3 , name: "Aegean"},
-    {id:4 , name: "Imperial"},
-    {id:5 , name: "Village"},
-    {id:6 , name: "Park"},
-    {id:7 , name: "Kolympia"},
+    {id:1 , name: "Hellas", companyBranch:2, sales_amid:1960021490, Ship_amID:1960021490, purch_amid:37, companyId:1, rootpath: "root", purch_serie:"02Μ01"},
+    {id:2 , name: "Princess", companyBranch:3, sales_amid:1960021490, Ship_amID:1960021491, purch_amid:37, companyId:1, rootpath: "root", purch_serie:"03Μ02"},
+    {id:3 , name: "Aegean", companyBranch:1, sales_amid:32, Ship_amID:32, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"01Μ01"},
+    {id:4 , name: "Imperial", companyBranch:2, sales_amid:32, Ship_amID:33, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"02Μ02"},
+    {id:5 , name: "Village", companyBranch:3, sales_amid:32, Ship_amID:34, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"03Μ03"},
+    {id:6 , name: "Park", companyBranch:4, sales_amid:32, Ship_amID:35,purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"04Μ04"},
+    //{id:7 , name: "Kolympia", companyId:3},
   ]);
   const [selectedStoreId, setSelectedStoreId] = useState(null);
+
+  const getStoreByBranchId = (id) => stores.find(store => store.companyBranch === id);
+  const getStoreById = (id) => stores.find(store => store.id === id);
 
   const handleDateChange = (event, date) => {
     setShowDatePicker(false);
@@ -35,29 +37,22 @@ const ParastatikoDetail = ({ selectedType }) => {
     }
   };
 
-  const handleFocus = (focus) => {
-    if (!isPickerFocused) {
-      setIsPickerFocused(true);
-    } else {
-      setIsPickerFocused(focus);
-    }
-    {
-      isPickerFocused ? fetchSuppliers() : null;
-    }
-  };
-
   const clearFields = () => {
     setDocnumber("");
     setSelectedSupplierId(null);
+    setSelectedStoreId(null);
     setSeriecode("");
     setRemarks("");
     setSelectedDate(new Date());
     handleQuantityChange([]);
   };
 
-  const sendPurchase = async (jsonData) => {
+  const sendPurchase = async (jsonData, customRoot = null) => {
     setBtnLoading(true);
-    const url = `http://${wsHost}:${wsPort}/${wsRoot}/ApplyBOData`;
+    const rootToUse = customRoot || wsRoot;
+    
+    const url = `http://${wsHost}:${wsPort}/${rootToUse}/ApplyBOData`;
+            
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -129,7 +124,7 @@ const ParastatikoDetail = ({ selectedType }) => {
     fetchSuppliers();
   }, []);
 
-  const handleSave = () => {
+  const handleDefaultSave = () => {
     const data = {
       docprmid:
         selectedType === "returning"
@@ -151,7 +146,6 @@ const ParastatikoDetail = ({ selectedType }) => {
         discval3: 0.0,
       })),
     };
-    //console.log('Data before send: ', data);
     if (
       selectedType === "receiving" ||
       selectedType === "returning" ||
@@ -168,15 +162,70 @@ const ParastatikoDetail = ({ selectedType }) => {
     } else if (selectedType === "inventory") {
       data.branchid = branch;
     }
-
     const jsonData = {
       bo: selectedType === "inventory" ? "TSTORETRNBO" : "TPURCHASETRNBO",
-      data: data,
+      data,
     };
     if (selectedType === "returning" || selectedType === "ordersup") {
       jsonData.doprint = 2;
     }
     sendPurchase(jsonData);
+  };
+
+  const handleSave = async() => {
+    if (selectedType === "intmovement") {
+      const sourceStore = getStoreByBranchId(Number(branch));
+      const destStore = getStoreById(selectedStoreId);
+
+      const baseItems = itemData.map(item => ({
+        itemid: item.itemid,
+        priqty: item.quantity,
+        price: 0.0,
+        discval1: 0.0,
+        discval2: 0.0,
+        discval3: 0.0,
+      }));
+
+      const common = {
+        docdate: selectedDate.toISOString().split("T")[0],
+        comment: remarks,
+        Itetrn: baseItems,
+      };
+
+      if (sourceStore.companyId === destStore.companyId) {
+        const data = {
+          docprmid: 25,
+          ...common,          
+          seriecode: seriesM,
+          branchid: branch,
+          DOCTPLUS: [{ WHLCodeIDTo: destStore.companyBranch }]          
+        };
+        
+        await sendPurchase({ bo: "TSTORETRNBO", data, doprint: 2 });
+      } else {
+        const sale = {
+          docprmid: 20,
+          ...common,
+          seriecode: seriesM,
+          branchid: branch,
+          amtrn_S1: [{ amid: destStore.sales_amid }],
+          DOCTPLUS: [{Ship_amID:destStore.Ship_amID}]
+        };
+        const purchase = {
+          docprmid: 28,
+          ...common,
+          seriecode: destStore.purch_serie,
+          branchid: destStore.companyBranch,
+          amtrn_S1: [{ amid: destStore.purch_amid }],
+        };
+        //console.log('Sales: ',JSON.stringify({ bo: "TSALESTRNBO", data: sale, doprint: 2 }));
+        //console.log('Agora: ',JSON.stringify({ bo: "TPURCHASETRNBO", data: purchase},  destStore.rootpath ));
+        await sendPurchase({ bo: "TSALESTRNBO", data: sale, doprint: 2 });
+        await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase}, destStore.rootpath);
+      }
+    } else {
+      handleDefaultSave();
+    }
   };
 
   return (
@@ -202,19 +251,17 @@ const ParastatikoDetail = ({ selectedType }) => {
       {selectedType === "intmovement" && (
         <View style={styles.row}>
           <Text style={[styles.caption, styles.alignRight]}>Κατάστημα:</Text>
-          <Picker
-            style={styles.input}
-            selectedValue={selectedStoreId}
-            onValueChange={(itemValue) => setSelectedStoreId(itemValue)}
-          >
-            {stores.map((store) => (
-              <Picker.Item
-                key={store.id}
-                label={store.name}
-                value={store.id}
-              />
-            ))}
-          </Picker>
+          <Dropdown
+            style={styles.dropdown}
+            data={stores.map((store) => ({ label: store.name, value: store.id }))}
+            search
+            labelField="label"
+            valueField="value"
+            placeholder="Επιλογή Καταστήματος"
+            searchPlaceholder="Αναζήτηση..."
+            value={selectedStoreId}
+            onChange={(item) => setSelectedStoreId(item.value)}
+          />
         </View>
       )}
       <View style={styles.row}>
