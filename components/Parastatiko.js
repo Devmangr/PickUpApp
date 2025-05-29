@@ -23,12 +23,13 @@ const ParastatikoDetail = ({ selectedType }) => {
     {id:4 , name: "Imperial", companyBranch:2, sales_amid:32, Ship_amID:33, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"02Μ02"},
     {id:5 , name: "Village", companyBranch:3, sales_amid:32, Ship_amID:34, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"03Μ03"},
     {id:6 , name: "Park", companyBranch:4, sales_amid:32, Ship_amID:35,purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"04Μ04"},
-    //{id:7 , name: "Kolympia", companyId:3},
   ]);
   const [selectedStoreId, setSelectedStoreId] = useState(null);
 
-  const getStoreByBranchId = (id) => stores.find(store => store.companyBranch === id);
-  const getStoreById = (id) => stores.find(store => store.id === id);
+  const getStoreByBranchAndRoot = (branchId, root) =>
+    stores.find(store => store.companyBranch === Number(branchId) && store.rootpath === root);
+
+  const getStoreById = (id) => stores.find(store => store.id === Number(id));
 
   const handleDateChange = (event, date) => {
     setShowDatePicker(false);
@@ -174,9 +175,10 @@ const ParastatikoDetail = ({ selectedType }) => {
 
   const handleSave = async() => {
     if (selectedType === "intmovement") {
-      const sourceStore = getStoreByBranchId(Number(branch));
+      const sourceStore = getStoreByBranchAndRoot(branch, wsRoot);
       const destStore = getStoreById(selectedStoreId);
-
+      console.log('Source: ',sourceStore);
+      console.log('Dest: ',destStore);
       const baseItems = itemData.map(item => ({
         itemid: item.itemid,
         priqty: item.quantity,
@@ -200,8 +202,8 @@ const ParastatikoDetail = ({ selectedType }) => {
           branchid: branch,
           DOCTPLUS: [{ WHLCodeIDTo: destStore.companyBranch }]          
         };
-        
-        await sendPurchase({ bo: "TSTORETRNBO", data, doprint: 2 });
+        console.log('IntMove: ',JSON.stringify({ bo: "TSTORETRNBO", data, doprint: 2 }));
+        //await sendPurchase({ bo: "TSTORETRNBO", data, doprint: 2 });
       } else {
         const sale = {
           docprmid: 20,
@@ -218,10 +220,10 @@ const ParastatikoDetail = ({ selectedType }) => {
           branchid: destStore.companyBranch,
           amtrn_S1: [{ amid: destStore.purch_amid }],
         };
-        //console.log('Sales: ',JSON.stringify({ bo: "TSALESTRNBO", data: sale, doprint: 2 }));
-        //console.log('Agora: ',JSON.stringify({ bo: "TPURCHASETRNBO", data: purchase},  destStore.rootpath ));
-        await sendPurchase({ bo: "TSALESTRNBO", data: sale, doprint: 2 });
-        await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase}, destStore.rootpath);
+        console.log('Sales: ',JSON.stringify({ bo: "TSALESTRNBO", data: sale, doprint: 2 }));
+        console.log('Agora: ',JSON.stringify({ bo: "TPURCHASETRNBO", data: purchase},  destStore.rootpath ));
+        //await sendPurchase({ bo: "TSALESTRNBO", data: sale, doprint: 2 });
+        //await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase}, destStore.rootpath);
       }
     } else {
       handleDefaultSave();
