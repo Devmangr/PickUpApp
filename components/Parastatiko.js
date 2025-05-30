@@ -202,8 +202,8 @@ const ParastatikoDetail = ({ selectedType }) => {
           branchid: branch,
           DOCTPLUS: [{ WHLCodeIDTo: destStore.companyBranch }]          
         };
-        console.log('IntMove: ',JSON.stringify({ bo: "TSTORETRNBO", data, doprint: 2 }));
-        //await sendPurchase({ bo: "TSTORETRNBO", data, doprint: 2 });
+        //console.log('IntMove: ',JSON.stringify({ bo: "TSTORETRNBO", data, doprint: 2 }));
+        await sendPurchase({ bo: "TSTORETRNBO", data, doprint: 2 });
       } else {
         const sale = {
           docprmid: 20,
@@ -220,10 +220,10 @@ const ParastatikoDetail = ({ selectedType }) => {
           branchid: destStore.companyBranch,
           amtrn_S1: [{ amid: destStore.purch_amid }],
         };
-        console.log('Sales: ',JSON.stringify({ bo: "TSALESTRNBO", data: sale, doprint: 2 }));
-        console.log('Agora: ',JSON.stringify({ bo: "TPURCHASETRNBO", data: purchase},  destStore.rootpath ));
-        //await sendPurchase({ bo: "TSALESTRNBO", data: sale, doprint: 2 });
-        //await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase}, destStore.rootpath);
+        //console.log('Sales: ',JSON.stringify({ bo: "TSALESTRNBO", data: sale, doprint: 2 }));
+        //console.log('Agora: ',JSON.stringify({ bo: "TPURCHASETRNBO", data: purchase},  destStore.rootpath ));
+        await sendPurchase({ bo: "TSALESTRNBO", data: sale, doprint: 2 });
+        await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase}, destStore.rootpath);
       }
     } else {
       handleDefaultSave();
