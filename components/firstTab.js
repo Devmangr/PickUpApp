@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import {View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert} from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
 import BarcodeComponent from "./scanner";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
+import { useTempStorage } from "../database/useTempStorage";
+import { useFocusEffect } from '@react-navigation/native';
+import LoadTempModal from '../components/LoadTempModal';
 
 export default function FirstTab({ selectedType }) {
   const [qtyValue, setQtyValue] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const {itemData, handleQuantityChange, wsHost, wsPort, wsRoot, wsUser, wsPass, priceList} = useAppContext();
+  const { itemData, handleQuantityChange, wsHost, wsPort, wsRoot, wsUser, wsPass, priceList } = useAppContext();
   const [isScanning, setIsScanning] = useState(false);
   const [itemid, setItemid] = useState("");
   const [labelCode, setLabelCode] = useState("");
@@ -18,6 +21,39 @@ export default function FirstTab({ selectedType }) {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupInputValue, setPopupInputValue] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
+
+  const { getSets, getItemsBySetId } = useTempStorage();
+  const [availableSets, setAvailableSets] = useState([]);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      (async () => {
+        const sets = await getSets(selectedType);
+        if (sets.length > 0) {
+          setAvailableSets(sets);
+          Alert.alert(
+            'Βρέθηκαν προσωρινά σετ',
+            `Βρέθηκαν ${sets.length} σετ. Θέλεις να τα φορτώσω;`,
+            [
+              { text: 'Όχι', style: 'cancel' },
+              { text: 'Ναι', onPress: () => setShowLoadModal(true) }
+            ]
+          );
+        }
+      })();
+    }, [selectedType])
+  );
+
+  const handleLoadSets = async (selectedSetIds) => {
+    let allItems = [];
+    for (const id of selectedSetIds) {
+      const items = await getItemsBySetId(id);
+      allItems = allItems.concat(items);
+    }
+    setItemData(allItems);
+    setShowLoadModal(false);
+  };
 
   const startScanner = () => {
     setIsScanning(true);
@@ -31,12 +67,19 @@ export default function FirstTab({ selectedType }) {
           onPress: () => console.error("Error calling API"),
         },
       ]);
-    } else {
+    } else if (parseInt(qtyValue, 10) >50) {
+      Alert.alert("Σφάλμα", `Δεν επιτρέπεται ποσότητα μεγαλύτερη από 50. `, [
+        {
+          text: "Ok",
+          onPress: () => console.error("Error calling API"),
+        },
+      ]);
+    }
+    else {
       const newItem = {
         itemid: itemid,
         code: labelCode,
         itemName: labelDescr,
-        itemNewPrice: newPrice,
         quantity: parseInt(qtyValue, 10) || 0,
       };
 
@@ -247,6 +290,13 @@ export default function FirstTab({ selectedType }) {
           </View>
         </View>
       </Modal>
+      <LoadTempModal
+        visible={showLoadModal}
+        sets={availableSets}
+        onCancel={() => setShowLoadModal(false)}
+        operationType={selectedType}
+        onConfirm={handleLoadSets}
+      />
     </View>
   );
 }

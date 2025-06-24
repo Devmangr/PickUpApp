@@ -6,15 +6,14 @@ import { useAppContext } from "./AppContext";
 const GridComponent = () => {
   const { itemData } = useAppContext();
 
-  const tableHead = ["Κωδικός", "Περιγραφή", "Ποσ.", "Ν.Τιμή"];
+  const tableHead = ["Κωδικός", "Περιγραφή", "Ποσ."];
   const tableData = itemData.map((item) => [
     item.code,
     item.itemName,
-    item.quantity,
-    item.itemNewPrice,
+    item.quantity
   ]);
 
-  const widthArr = [70, 190, 50, 70];
+  const widthArr = [70, 240, 70];
 
   return (
     <ScrollView>

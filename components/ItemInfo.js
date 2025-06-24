@@ -64,7 +64,7 @@ export default function ItemInfo() {
       );
       const [data1] = await Promise.all([response1.json()]);
       const compineData = [...(Array.isArray(data1) ? data1 : [])];
-      console.log(compineData[0]);
+
       if (compineData.length > 0) {
         setLabelCode(data);
         setLabelDescr(compineData[0].name);
@@ -101,10 +101,11 @@ export default function ItemInfo() {
 
   const handleBarcodeScanned = async (data) => {
     setIsScanning(false);
+    console.log('Scanned');
     const body = JSON.stringify({
-      sql: "declare @itid int = (select distinct id from item left join itembarcode ibc on ibc.itemid = item.id where ibc.barcode=:1); declare @itdescr varchar(150) = (select distinct description from item left join itembarcode ibc on ibc.itemid = item.id where ibc.barcode=:2); SELECT Sum( priQty ) PriQty, Sum( itemtrn.net_val) /  Sum(priQty ) CalcPrice, SUM(itemtrn.Start_Val) / Sum(PriQty) Price, Min( itemtrn.DocDate ) DocDate, am.code, am.name, @itdescr itdescr FROM ItemTrn left join allmaster am on am.id=itemtrn.amid WHERE itemid = @itid AND itemtrn.trndocId = (SELECT max(ITr.TrnDocID) FROM ItemTrn itr INNER JOIN DocTrn DTrn ON (DTrn.Id = Itr.TrnDocId  AND DTrn.UpdLastPrice = 1) INNER JOIN DocPrmDetSt DPrmSt ON (DPrmst.DocId = Dtrn.docprmid AND dprmst.LineType = itr.linetype AND dprmst.updLastPrice = 1) WHERE itr.ItemId = @itid AND dtrn.iscanceled = 0 AND itr.InVal = 1 AND net_val > 0 AND priqty > 0 AND itr.Id > 0 and itr.amRowType=2 and itr.WHLCodeID=:3) group by am.code, am.name Having Sum(PriQty)<>0",
+      sql: "declare @itid int = (select distinct id from item left join itembarcode ibc on ibc.itemid = item.id where ibc.barcode=:1); declare @itdescr varchar(150) = (select description from item where id=@itid); declare @itqty float = (select sum(QtyProvision) qty from fnQtyProvision1(year(getdate())) where WhLCodeID=:2 and iteid = @itid group by iteid); declare @itRetail varchar(max) = (select cast(Price as money) Retail, case when mat.Descr is null then 'TEM' else mat.Descr end matDescr from ITEMPRLIST prlist left join MATMESUNIT mat on mat.CodeID = prlist.MatMUCodeID where ItemID = @itid and PrListCodeID=:3 for json path) SELECT Sum( priQty ) PriQty, Sum( itemtrn.net_val) /  Sum(priQty ) CalcPrice, SUM(itemtrn.Start_Val) / Sum(PriQty) Price, Min( itemtrn.DocDate ) DocDate, am.code, am.name, @itdescr itdescr, @itqty itqty, @itRetail itRetail FROM ItemTrn left join allmaster am on am.id=itemtrn.amid WHERE itemid = @itid AND itemtrn.trndocId = (SELECT max(ITr.TrnDocID) FROM ItemTrn itr INNER JOIN DocTrn DTrn ON (DTrn.Id = Itr.TrnDocId  AND DTrn.UpdLastPrice = 1) INNER JOIN DocPrmDetSt DPrmSt ON (DPrmst.DocId = Dtrn.docprmid AND dprmst.LineType = itr.linetype AND dprmst.updLastPrice = 1) WHERE itr.ItemId = @itid AND dtrn.iscanceled = 0 AND itr.InVal = 1 AND net_val > 0 AND priqty > 0 AND itr.Id > 0 and itr.amRowType=2 and itr.WHLCodeID=:4) group by am.code, am.name Having Sum(PriQty)<>0",
       dbfqr: true,
-      params: [data, data, branch],
+      params: [data, data, priceList, branch],
     });
 
     try {

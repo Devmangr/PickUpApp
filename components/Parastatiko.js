@@ -4,25 +4,26 @@ import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
+import { useTempStorage } from '../database/useTempStorage';
 
-const ParastatikoDetail = ({ selectedType }) => {
+const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppliers = [] }) => {
   const [seriecode, setSeriecode] = useState("");
   const [docnumber, setDocnumber] = useState("");
-  const [selectedSupplierId, setSelectedSupplierId] = useState(null);
+
   const [supplierDropdownData, setSupplierDropdownData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const {itemData, wsHost, wsPort, wsRoot, wsUser, wsPass, seriesM, seriesT, branch, handleQuantityChange, selectSup, updateSelectSup} = useAppContext();
+  const { wsHost, wsPort, wsRoot, wsUser, wsPass, seriesM, seriesT, branch, handleQuantityChange, selectSup: selectedSupplierId, updateSelectSup, itemData } = useAppContext();
   const [remarks, setRemarks] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
   const [btnLoading, setBtnLoading] = useState(false);
-  const [stores, setStores] = useState([
-    {id:1 , name: "Hellas", companyBranch:2, sales_amid:1960021490, Ship_amID:1960021490, purch_amid:37, companyId:1, rootpath: "root", purch_serie:"02Μ01"},
-    {id:2 , name: "Princess", companyBranch:3, sales_amid:1960021490, Ship_amID:1960021491, purch_amid:37, companyId:1, rootpath: "root", purch_serie:"03Μ02"},
-    {id:3 , name: "Aegean", companyBranch:1, sales_amid:32, Ship_amID:32, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"01Μ01"},
-    {id:4 , name: "Imperial", companyBranch:2, sales_amid:32, Ship_amID:33, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"02Μ02"},
-    {id:5 , name: "Village", companyBranch:3, sales_amid:32, Ship_amID:34, purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"03Μ03"},
-    {id:6 , name: "Park", companyBranch:4, sales_amid:32, Ship_amID:35,purch_amid:1960021494, companyId:2, rootpath: "oe", purch_serie:"04Μ04"},
+  const [stores] = useState([
+    { id: 1, name: "Hellas", companyBranch: 2, sales_amid: 1960021490, Ship_amID: 1960021490, purch_amid: 37, companyId: 1, rootpath: "root", purch_serie: "02Μ01" },
+    { id: 2, name: "Princess", companyBranch: 3, sales_amid: 1960021490, Ship_amID: 1960021491, purch_amid: 37, companyId: 1, rootpath: "root", purch_serie: "03Μ02" },
+    { id: 3, name: "Aegean", companyBranch: 1, sales_amid: 32, Ship_amID: 32, purch_amid: 1960021494, companyId: 2, rootpath: "oe", purch_serie: "01Μ01" },
+    { id: 4, name: "Imperial", companyBranch: 2, sales_amid: 32, Ship_amID: 33, purch_amid: 1960021494, companyId: 2, rootpath: "oe", purch_serie: "02Μ02" },
+    { id: 5, name: "Village", companyBranch: 3, sales_amid: 32, Ship_amID: 34, purch_amid: 1960021494, companyId: 2, rootpath: "oe", purch_serie: "03Μ03" },
+    { id: 6, name: "Park", companyBranch: 4, sales_amid: 32, Ship_amID: 35, purch_amid: 1960021494, companyId: 2, rootpath: "oe", purch_serie: "04Μ04" },
   ]);
   const [selectedStoreId, setSelectedStoreId] = useState(null);
 
@@ -30,6 +31,22 @@ const ParastatikoDetail = ({ selectedType }) => {
     stores.find(store => store.companyBranch === Number(branchId) && store.rootpath === root);
 
   const getStoreById = (id) => stores.find(store => store.id === Number(id));
+
+  const { saveTempData, clearSetsForSupplier } = useTempStorage();
+  const supplierObj = supplierDropdownData.find(s => s.id === selectedSupplierId) || {};
+  const supplierName = supplierObj.name || '—';
+
+  const handleSaveTemp = async () => {
+    try {
+      await saveTempData({ operationType: selectedType, supplierId: selectedSupplierId, supplierName, items: itemData });
+      Alert.alert('ΟΚ', 'Τα δεδομένα αποθηκεύτηκαν προσωρινά.');
+      clearFields();
+      handleQuantityChange([]);
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Σφάλμα', 'Κάτι πήγε στραβά στην αποθήκευση.');
+    }
+  };
 
   const handleDateChange = (event, date) => {
     setShowDatePicker(false);
@@ -39,8 +56,9 @@ const ParastatikoDetail = ({ selectedType }) => {
   };
 
   const clearFields = () => {
+    console.log('🧹 Καθαρισμός πεδίων...');
     setDocnumber("");
-    setSelectedSupplierId(null);
+    updateSelectSup(null);
     setSelectedStoreId(null);
     setSeriecode("");
     setRemarks("");
@@ -51,9 +69,9 @@ const ParastatikoDetail = ({ selectedType }) => {
   const sendPurchase = async (jsonData, customRoot = null) => {
     setBtnLoading(true);
     const rootToUse = customRoot || wsRoot;
-    
+
     const url = `http://${wsHost}:${wsPort}/${rootToUse}/ApplyBOData`;
-            
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -64,7 +82,7 @@ const ParastatikoDetail = ({ selectedType }) => {
         body: JSON.stringify(jsonData),
       });
       const apiData = await response.json();
-      //console.log(apiData);
+
       setBtnLoading(false);
       if (apiData.error) {
         Alert.alert("Σφάλμα", `Μήνυμα λάθους: ${apiData.error}`, [
@@ -84,6 +102,7 @@ const ParastatikoDetail = ({ selectedType }) => {
             },
           ]
         );
+        await clearSetsForSupplier(selectedType, selectedSupplierId);
       }
     } catch (error) {
       Alert.alert(
@@ -131,10 +150,10 @@ const ParastatikoDetail = ({ selectedType }) => {
         selectedType === "returning"
           ? 32
           : selectedType === "receiving"
-          ? 28
-          : selectedType === "ordersup"
-          ? 27
-          : 70,
+            ? 28
+            : selectedType === "ordersup"
+              ? 27
+              : 70,
       seriecode: selectedType === "receiving" ? seriesT : seriesM,
       docdate: selectedDate.toISOString().split("T")[0],
       comment: remarks,
@@ -173,12 +192,11 @@ const ParastatikoDetail = ({ selectedType }) => {
     sendPurchase(jsonData);
   };
 
-  const handleSave = async() => {
+  const handleSave = async () => {
     if (selectedType === "intmovement") {
       const sourceStore = getStoreByBranchAndRoot(branch, wsRoot);
       const destStore = getStoreById(selectedStoreId);
-      console.log('Source: ',sourceStore);
-      console.log('Dest: ',destStore);
+
       const baseItems = itemData.map(item => ({
         itemid: item.itemid,
         priqty: item.quantity,
@@ -197,12 +215,12 @@ const ParastatikoDetail = ({ selectedType }) => {
       if (sourceStore.companyId === destStore.companyId) {
         const data = {
           docprmid: 25,
-          ...common,          
+          ...common,
           seriecode: seriesM,
           branchid: branch,
-          DOCTPLUS: [{ WHLCodeIDTo: destStore.companyBranch }]          
+          DOCTPLUS: [{ WHLCodeIDTo: destStore.companyBranch }]
         };
-        //console.log('IntMove: ',JSON.stringify({ bo: "TSTORETRNBO", data, doprint: 2 }));
+
         await sendPurchase({ bo: "TSTORETRNBO", data, doprint: 2 });
       } else {
         const sale = {
@@ -211,7 +229,7 @@ const ParastatikoDetail = ({ selectedType }) => {
           seriecode: seriesM,
           branchid: branch,
           amtrn_S1: [{ amid: destStore.sales_amid }],
-          DOCTPLUS: [{Ship_amID:destStore.Ship_amID}]
+          DOCTPLUS: [{ Ship_amID: destStore.Ship_amID }]
         };
         const purchase = {
           docprmid: 28,
@@ -220,10 +238,9 @@ const ParastatikoDetail = ({ selectedType }) => {
           branchid: destStore.companyBranch,
           amtrn_S1: [{ amid: destStore.purch_amid }],
         };
-        //console.log('Sales: ',JSON.stringify({ bo: "TSALESTRNBO", data: sale, doprint: 2 }));
-        //console.log('Agora: ',JSON.stringify({ bo: "TPURCHASETRNBO", data: purchase},  destStore.rootpath ));
+
         await sendPurchase({ bo: "TSALESTRNBO", data: sale, doprint: 2 });
-        await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase}, destStore.rootpath);
+        await sendPurchase({ bo: "TPURCHASETRNBO", data: purchase }, destStore.rootpath);
       }
     } else {
       handleDefaultSave();
@@ -243,10 +260,7 @@ const ParastatikoDetail = ({ selectedType }) => {
             placeholder="Επιλογή Προμηθευτή"
             searchPlaceholder="Αναζήτηση..."
             value={selectedSupplierId}
-            onChange={(item) => {
-              setSelectedSupplierId(item.value),
-              updateSelectSup(item.value);
-            }}
+            onChange={item => updateSelectSup(item.value)}
           />
         </View>
       )}
@@ -320,14 +334,18 @@ const ParastatikoDetail = ({ selectedType }) => {
       )}
       <View style={styles.buttonContainer}>
         <Button
-          title="Αποθήκευση"
+          title="Αποθηκευση"
           className={`btn ${btnLoading ? "btn-warning" : "btn-success"}`}
           onPress={() => handleSave()}
           disabled={btnLoading}
         >
-          {btnLoading ? "Loading..." : "Αποθήκευση"}
+          {btnLoading ? "Loading..." : "Αποθηκευση"}
         </Button>
       </View>
+      {selectedType != "inventory" && selectedType != "intmovement" && (
+      <View style={styles.buttonTemp}>  
+        <Button color="green" title="Αποθήκευση Προσωρινα" onPress={handleSaveTemp} />
+      </View>)}
     </View>
   );
 };
@@ -363,6 +381,9 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flex: 1,
   },
+  buttonTemp : {
+        
+  },
   btn: {
     backgroundColor: "green",
     borderRadius: 8,
@@ -373,8 +394,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     elevation: 8,
   },
-    dropdown: {
-    flex:1,
+  dropdown: {
+    flex: 1,
     height: 50,
     borderColor: 'gray',
     borderWidth: 0.5,
