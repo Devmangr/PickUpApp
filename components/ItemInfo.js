@@ -134,6 +134,9 @@ export default function ItemInfo() {
         setLastBuyQty(compineData[0].PriQty);
         setItemDescr(compineData[0].itdescr);
         setCombinedData(compineData);
+
+        const retailData = JSON.parse(compineData[0].itRetail);
+        setRetailItems(Array.isArray(retailData) ? retailData : [retailData]);
       } else {
         setLabelCode("Δεν βρέθηκε προϊόν");
         setLabelDescr("");
