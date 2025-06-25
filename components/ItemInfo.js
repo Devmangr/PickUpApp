@@ -133,6 +133,7 @@ export default function ItemInfo() {
         setLastDocdate(compineData[0].DocDate.split("-").reverse().join("-"));
         setLastBuyQty(compineData[0].PriQty);
         setItemDescr(compineData[0].itdescr);
+        setItemBal(compineData[0].itqty);
         setCombinedData(compineData);
 
         const retailData = JSON.parse(compineData[0].itRetail);
@@ -141,6 +142,7 @@ export default function ItemInfo() {
         setLabelCode("Δεν βρέθηκε προϊόν");
         setLabelDescr("");
         setLabelBarcode(data);
+        setRetailItems([]);
         setCombinedData([]);
       }
     } catch (error) {
