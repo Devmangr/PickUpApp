@@ -16,8 +16,10 @@ const [searchText, setSearchText] = useState("");
 const { wsHost, wsPort, wsRoot, wsUser, wsPass } = useAppContext();
 const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 const filteredData = combinedData.filter(item =>
-  item.Description.toLowerCase().includes(searchText.toLowerCase())
+  (item.Description?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+  (item.code?.toLowerCase() || '').includes(searchText.toLowerCase())
 );
+
 
  
   const handleRowPress = (item) => {

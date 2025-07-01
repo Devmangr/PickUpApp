@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, Button, Text, TextInput, StyleSheet, Modal } from "react-native";
+import { View, Button, Text, TextInput, StyleSheet, Modal, Alert } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 import InOutSupTable from "./InOutOrder";
 import BarcodeComponent from "./scanner";
 import { Dropdown } from 'react-native-element-dropdown';
+import { useTempStorage } from "../database/useTempStorage";
+import { useFocusEffect } from '@react-navigation/native';
+import LoadTempModal from '../components/LoadTempModal';
 
-export default function OrderSup() {
+export default function OrderSup({ selectedType }) {
   const { wsHost, wsPort, wsRoot, wsUser, wsPass, branch, updateSelectSup } =
     useAppContext();
   const [returnedData, setReturnedData] = useState([]);
@@ -23,7 +26,10 @@ export default function OrderSup() {
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState(null);
-  
+  const { getSets, getItemsBySetId } = useTempStorage();
+  const [availableSets, setAvailableSets] = useState([]);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 
   const fetchSuppliers = async () => {
@@ -48,6 +54,49 @@ export default function OrderSup() {
     } catch (error) {
       console.error("Error fetching suppliers data: ", error);
     }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!selectedType) return;
+
+      const loadTempSets = async () => {
+        try {
+          const sets = await getSets(selectedType);
+          if (sets.length > 0) {
+            Alert.alert(
+              'Αποθηκευμένα Δεδομένα',
+              `Υπάρχουν ${sets.length} προσωρινά αποθηκευμένα σετ. Θέλεις να τα φορτώσεις;`,
+              [
+                { text: 'Όχι', style: 'cancel' },
+                {
+                  text: 'Ναι',
+                  onPress: () => {
+                    setAvailableSets(sets);
+                    setShowLoadModal(true);
+                  }
+                },
+              ]
+            );
+          }
+        } catch (e) {
+          console.error('❌ Σφάλμα κατά τη φόρτωση σετ:', e);
+        }
+      };
+
+      loadTempSets();
+    }, [selectedType])
+  );
+
+
+  const handleLoadSets = async (selectedSetIds) => {
+    let allItems = [];
+    for (const id of selectedSetIds) {
+      const items = await getItemsBySetId(id);
+      allItems = allItems.concat(items);
+    }
+    setItemData(allItems);
+    setShowLoadModal(false);
   };
 
   useEffect(() => {
@@ -78,7 +127,7 @@ export default function OrderSup() {
         });
         const textData = await response.text();
         const newData = JSON.parse(textData);
-        
+
         setBtnLoading(false);
 
         if (Array.isArray(newData)) {
@@ -140,7 +189,7 @@ export default function OrderSup() {
             value={selectedSupplierId}
             onChange={(item) => {
               setSelectedSupplierId(item.value),
-              updateSelectSup(item.value);
+                updateSelectSup(item.value);
             }}
           />
         </View>
@@ -197,8 +246,8 @@ export default function OrderSup() {
           </View>
         </View>
       </View>
-      <InOutSupTable 
-        combinedData={returnedData} 
+      <InOutSupTable
+        combinedData={returnedData}
         scannedCode={scannedCode}
         clearScannedCode={() => setScannedCode(null)}
       />
@@ -212,6 +261,13 @@ export default function OrderSup() {
           />
         </Modal>
       )}
+      <LoadTempModal
+        visible={showLoadModal}
+        sets={availableSets}
+        onCancel={() => setShowLoadModal(false)}
+        operationType={selectedType}
+        onConfirm={handleLoadSets}
+      />
     </View>
   );
 }
@@ -259,7 +315,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   dropdown: {
-    flex:1,
+    flex: 1,
     height: 50,
     borderColor: 'gray',
     borderWidth: 0.5,

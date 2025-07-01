@@ -1,13 +1,16 @@
-import React, { useState } from "react";
-import { TabView, TabBar, SceneMap } from "react-native-tab-view";
+import { useState } from "react";
+import { TabView, TabBar } from "react-native-tab-view";
 import { View } from "react-native";
 import GridComponent from "../components/gridComponent";
 import OrderSup from "../components/OrderSup";
 import ParastatikoDetail from "../components/Parastatiko";
+import { useAppContext } from '../components/AppContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
-const FirstRoute = () => (
+const FirstRoute = ({ selectedType }) => (
   <View style={{ flex: 1 }}>
-    <OrderSup />
+    <OrderSup selectedType={selectedType}/>
   </View>
 );
 
@@ -24,6 +27,18 @@ const ThirdRoute = ({ selectedType }) => (
 );
 
 const OrderScreen = ({ route }) => {
+  const { handleQuantityChange, updateSelectSup } = useAppContext();
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log('👈 Επιστροφή από παραγγελία — καθάρισμα');
+        updateSelectSup(null);
+        handleQuantityChange([]);
+      };
+    }, [])
+  );
+  
   const { selectedType } = route.params || {};
   const [index, setIndex] = useState(0);
   const [routes] = useState([
@@ -35,7 +50,7 @@ const OrderScreen = ({ route }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "first":
-        return <FirstRoute />;
+        return <FirstRoute selectedType={selectedType}/>;
       case "second":
         return <SecondRoute />;
       case "third":
