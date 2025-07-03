@@ -105,13 +105,14 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
         await clearSetsForSupplier(selectedType, selectedSupplierId);
       }
     } catch (error) {
+      setBtnLoading(false);
+      console.error("❌ Error sending purchase", error);
       Alert.alert(
         "Σφάλμα",
         `Σφάλμα στην αποστολή του παραστατικού με αριθμό ${docnumber}. Μήνυμα: ${apiData.error}. `,
         [
           {
             text: "Ok",
-            onPress: () => console.error("Error sending purchase", error),
           },
         ]
       );
@@ -166,31 +167,43 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
         discval3: 0.0,
       })),
     };
-    if (
-      selectedType === "receiving" ||
-      selectedType === "returning" ||
-      selectedType === "ordersup"
-    ) {
-      if (selectedType === "ordersup") {
-        data.amtrn_S1 = [{ amid: selectSup }];
-      } else {
-        data.amtrn_S1 = [{ amid: selectedSupplierId }];
+
+    try {
+      if (
+        selectedType === "receiving" ||
+        selectedType === "returning" ||
+        selectedType === "ordersup"
+      ) {
+        if (selectedType === "ordersup") {
+          data.amtrn_S1 = [{ amid: selectedSupplierId ?? 0 }];
+        } else {
+          data.amtrn_S1 = [{ amid: selectedSupplierId ?? 0 }];
+        }
+
+        data.Number = docnumber ?? '';
+        data.docserie = seriecode ?? '';
+        data.branchid = branch ?? 0;
+      } else if (selectedType === "inventory") {
+        data.branchid = branch ?? 0;
       }
-      data.Number = docnumber;
-      data.docserie = seriecode;
-      data.branchid = branch;
-    } else if (selectedType === "inventory") {
-      data.branchid = branch;
+
+      const jsonData = {
+        bo: selectedType === "inventory" ? "TSTORETRNBO" : "TPURCHASETRNBO",
+        data,
+      };
+
+      if (selectedType === "returning" || selectedType === "ordersup") {
+        jsonData.doprint = 2;
+      }
+
+      sendPurchase(jsonData);
+
+    } catch (err) {
+      console.error('❌ Σφάλμα στο construction του jsonData:', err);
+      Alert.alert('Σφάλμα', 'Αποτυχία κατά την κατασκευή των δεδομένων.');
     }
-    const jsonData = {
-      bo: selectedType === "inventory" ? "TSTORETRNBO" : "TPURCHASETRNBO",
-      data,
-    };
-    if (selectedType === "returning" || selectedType === "ordersup") {
-      jsonData.doprint = 2;
-    }
-    sendPurchase(jsonData);
   };
+
 
   const handleSave = async () => {
     if (selectedType === "intmovement") {
@@ -343,9 +356,9 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
         </Button>
       </View>
       {selectedType != "inventory" && selectedType != "intmovement" && (
-      <View style={styles.buttonTemp}>  
-        <Button color="green" title="Αποθήκευση Προσωρινα" onPress={handleSaveTemp} />
-      </View>)}
+        <View style={styles.buttonTemp}>
+          <Button color="green" title="Αποθήκευση Προσωρινα" onPress={handleSaveTemp} />
+        </View>)}
     </View>
   );
 };
@@ -381,8 +394,8 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flex: 1,
   },
-  buttonTemp : {
-        
+  buttonTemp: {
+
   },
   btn: {
     backgroundColor: "green",

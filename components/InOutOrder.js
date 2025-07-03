@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from "react";
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput} from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput } from "react-native";
 import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
 
 const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
-const { itemData, handleQuantityChange, priceList } = useAppContext();
-const [isModalVisible, setIsModalVisible] = useState(false);
-const [selectdItem, setSelectedItem] = useState(null);
-const [qtyValue, setQtyValue] = useState("");
-const [itemid, setItemid] = useState("");
-const [itemCode, setItemCode] = useState("");
-const [itemDescr, setItemDescr] = useState("");
-const [orderedItems, setOrderedItems] = useState([]);
-const [searchText, setSearchText] = useState("");
-const { wsHost, wsPort, wsRoot, wsUser, wsPass } = useAppContext();
-const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
-const filteredData = combinedData.filter(item =>
-  (item.Description?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
-  (item.code?.toLowerCase() || '').includes(searchText.toLowerCase())
-);
+  const { itemData, handleQuantityChange, priceList } = useAppContext();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectdItem, setSelectedItem] = useState(null);
+  const [qtyValue, setQtyValue] = useState("");
+  const [itemid, setItemid] = useState("");
+  const [itemCode, setItemCode] = useState("");
+  const [itemDescr, setItemDescr] = useState("");
+  const [orderedItems, setOrderedItems] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const { wsHost, wsPort, wsRoot, wsUser, wsPass } = useAppContext();
+  const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
+  const filteredData = combinedData.filter(item =>
+    (item.Description?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+    (item.code?.toLowerCase() || '').includes(searchText.toLowerCase())
+  );
 
-
- 
   const handleRowPress = (item) => {
     setSelectedItem(item);
     setIsModalVisible(true);
@@ -38,7 +36,7 @@ const filteredData = combinedData.filter(item =>
           dbfqr: true,
           params: [priceList, barcode],
         });
-  
+
         const response = await fetch(API_ENDPOINT, {
           method: "POST",
           headers: {
@@ -47,20 +45,20 @@ const filteredData = combinedData.filter(item =>
           },
           body: body,
         });
-  
+
         const data = await response.json();
-  
+
         if (data && data.length > 0) {
           const item = data[0];
-  
+
           const alreadyExists = orderedItems.includes(item.id);
-  
+
           setItemid(item.id);
           setItemCode(item.code);
           setItemDescr(item.description);
           setSelectedItem(item);
           setIsModalVisible(true);
-  
+
           // Αν υπάρχει, δεν προσθέτουμε, απλώς ανοίγουμε modal για να ενημερωθεί ποσότητα
           if (!alreadyExists) {
             setOrderedItems((prev) => [...prev, item.id]);
@@ -75,12 +73,12 @@ const filteredData = combinedData.filter(item =>
         clearScannedCode();
       }
     };
-  
+
     if (scannedCode) {
       fetchItemByBarcode(scannedCode);
     }
   }, [scannedCode]);
-  
+
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
@@ -103,9 +101,9 @@ const filteredData = combinedData.filter(item =>
         //itemNewPrice: newPrice,
         quantity: parseInt(qtyValue, 10) || 0,
       };
-      
+
       const updatedData = [...itemData, newItem];
-            
+
       handleQuantityChange(updatedData);
       setOrderedItems((prev) => [...prev, itemid]);
       handleCloseModal();
@@ -188,18 +186,15 @@ const filteredData = combinedData.filter(item =>
                 keyboardType="numeric"
               />
             </View>
-            <Pressable style={styles.btn} onPress={() => handleSave()}>
-              <Text
-                style={{
-                  textAlign: "center",
-                  fontSize: 16,
-                  fontWeight: "bold",
-                  color: "#fff",
-                }}
-              >
-                OK
-              </Text>
-            </Pressable>
+
+            <View style={styles.buttonPopupContainer}>
+              <TouchableOpacity style={styles.popupSearchButton} onPress={() => handleSave()}>
+                <Text style={{ textAlign: "center", fontSize: 16, fontWeight: "bold", color: "#fff", }}>OK</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.popupCancelButton} onPress={() => handleCloseModal()}>
+                <Text style={styles.popupButtonText}>Άκυρο</Text>
+              </TouchableOpacity>
+            </View>
             {orderedItems.includes(itemid) && (
               <Pressable
                 style={[styles.btn, { backgroundColor: "red", marginTop: 10 }]}
@@ -286,6 +281,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     elevation: 8,
   },
+  buttonPopupContainer: {
+    flexDirection: "row", justifyContent: "space-between",
+    width: "95%", paddingHorizontal: 10
+  },
+  popupSearchButton: {
+    backgroundColor: "green", borderRadius: 8, alignItems: "center",
+    paddingVertical: 15, marginTop: 20, width: 100,
+  },
+  popupCancelButton: {
+    backgroundColor: "red", borderRadius: 8, alignItems: "center",
+    paddingVertical: 15, marginTop: 20, width: 100,
+  },
   input: {
     flex: 1,
     height: 40,
@@ -319,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  orderedRow : {
+  orderedRow: {
     backgroundColor: "#d0f0c0"
   },
   btnText: {
@@ -328,17 +335,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
   },
-searchContainer: {
-  marginBottom: 8,
-  
-},
-searchInput: {
-  height: 40,
-  borderColor: "#ccc",
-  borderWidth: 1,
-  borderRadius: 4,
-  paddingHorizontal: 8,
-},
+  searchContainer: {
+    marginBottom: 8,
+
+  },
+  searchInput: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+  },
 
 });
 

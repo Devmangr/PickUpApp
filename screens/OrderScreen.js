@@ -8,26 +8,9 @@ import { useAppContext } from '../components/AppContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
-const FirstRoute = ({ selectedType }) => (
-  <View style={{ flex: 1 }}>
-    <OrderSup selectedType={selectedType}/>
-  </View>
-);
-
-const SecondRoute = () => (
-  <View style={{ flex: 1 }}>
-    <GridComponent />
-  </View>
-);
-
-const ThirdRoute = ({ selectedType }) => (
-  <View style={{ flex: 1 }}>
-    <ParastatikoDetail selectedType={selectedType} />
-  </View>
-);
-
 const OrderScreen = ({ route }) => {
   const { handleQuantityChange, updateSelectSup } = useAppContext();
+  const [selectedSupplierId, setSelectedSupplierId] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -35,6 +18,7 @@ const OrderScreen = ({ route }) => {
         console.log('👈 Επιστροφή από παραγγελία — καθάρισμα');
         updateSelectSup(null);
         handleQuantityChange([]);
+        setSelectedSupplierId(null);
       };
     }, [])
   );
@@ -50,11 +34,30 @@ const OrderScreen = ({ route }) => {
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "first":
-        return <FirstRoute selectedType={selectedType}/>;
+        return (
+          <View style={{ flex: 1 }}>
+            <OrderSup
+              selectedType={selectedType}
+              selectedSupplierId={selectedSupplierId}
+              setSelectedSupplierId={setSelectedSupplierId}
+            />
+          </View>
+        );
       case "second":
-        return <SecondRoute />;
+        return (
+          <View style={{ flex: 1 }}>
+            <GridComponent />
+          </View>
+        )
       case "third":
-        return <ThirdRoute selectedType={selectedType} />;
+        return (
+          <View style={{ flex: 1 }}>
+            <ParastatikoDetail
+              selectedType={selectedType}
+              selectedSupplierId={selectedSupplierId}
+            />
+          </View>
+        );
       default:
         return null;
     }

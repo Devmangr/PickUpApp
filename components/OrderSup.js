@@ -88,7 +88,6 @@ export default function OrderSup({ selectedType }) {
     }, [selectedType])
   );
 
-
   const handleLoadSets = async (selectedSetIds) => {
     let allItems = [];
     for (const id of selectedSetIds) {
@@ -253,11 +252,11 @@ export default function OrderSup({ selectedType }) {
       />
       {isScanning && (
         <Modal visible={true} animationType="slide">
-          <BarcodeComponent
-            onBarCodeScanned={(code) => {
+          <BarcodeComponent onBarCodeScanned={(code) => {
               setIsScanning(false);
               setScannedCode(code); // 👉 περνάμε το code στο table
-            }}
+            }} 
+            onClose={() => setIsScanning(false)}
           />
         </Modal>
       )}
