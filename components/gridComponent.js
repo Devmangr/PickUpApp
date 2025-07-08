@@ -1,36 +1,57 @@
 import React from "react";
-import { StyleSheet, View, ScrollView } from "react-native";
+import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Alert } from "react-native";
 import { Table, Row, Rows } from "react-native-table-component";
 import { useAppContext } from "./AppContext";
 
 const GridComponent = () => {
-  const { itemData } = useAppContext();
+  const { itemData, handleQuantityChange } = useAppContext();
 
-  const tableHead = ["Κωδικός", "Περιγραφή", "Ποσ."];
-  const tableData = itemData.map((item) => [
+  const tableHead = ["Κωδικός", "Περιγραφή", "Ποσ.", "Διαγραφή"];
+  const widthArr = [70, 190, 50, 80];
+
+  const confirmDelete = (index, itemName) => {
+    Alert.alert(
+      "Επιβεβαίωση",
+      `Θέλεις να διαγράψεις το προϊόν:\n\n${itemName};`,
+      [
+        { text: "Άκυρο", style: "cancel" },
+        {
+          text: "Διαγραφή",
+          style: "destructive",
+          onPress: () => {
+            const updatedData = [...itemData];
+            updatedData.splice(index, 1);
+            handleQuantityChange(updatedData);
+          },
+        },
+      ]
+    );
+  };
+
+  const tableData = itemData.map((item, index) => [
     item.code,
     item.itemName,
-    item.quantity
+    item.quantity,
+    <TouchableOpacity onPress={() => confirmDelete(index, item.itemName)}>
+      <Text style={styles.deleteButton}>🗑️</Text>
+    </TouchableOpacity>,
   ]);
-
-  const widthArr = [70, 240, 70];
 
   return (
     <ScrollView>
       <View style={styles.container}>
         <Table style={styles.table}>
           <Row
-            key={Math.random()}
             data={tableHead}
             widthArr={widthArr}
             style={styles.head}
+            textStyle={styles.headerText}
           />
           <Rows
-            key={Math.random()}
             data={tableData}
             widthArr={widthArr}
-            style={styles.rowText}
-            textStyle={styles.textstyles}
+            style={styles.row}
+            textStyle={styles.text}
           />
         </Table>
       </View>
@@ -39,10 +60,9 @@ const GridComponent = () => {
 };
 
 const styles = StyleSheet.create({
-  textstyles: { fontSize: 12, fontWeight: 600 },
   container: {
     flex: 1,
-    padding: 14,
+    padding: 5,
     paddingTop: 10,
   },
   table: {
@@ -55,12 +75,22 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: "#f1f8ff",
   },
-  headText: {
-    margin: 2,
+  headerText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  rowText: {
-    margin: 2,
-    color: "black",
+  row: {
+    height: 40,
+  },
+  text: {
+    fontSize: 12,
+    textAlign: "center",
+  },
+  deleteButton: {
+    color: "red",
+    fontSize: 18,
+    textAlign: "center",
   },
 });
 

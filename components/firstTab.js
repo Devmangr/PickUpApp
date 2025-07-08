@@ -27,7 +27,7 @@ export default function FirstTab({ selectedType }) {
   const {
     itemData, handleQuantityChange,
     wsHost, wsPort, wsRoot, wsUser, wsPass,
-    priceList
+    priceList, branch
   } = useAppContext();
 
   const [product, setProduct] = useState({
@@ -36,7 +36,8 @@ export default function FirstTab({ selectedType }) {
     description: "",
     barcode: "",
     price: "",
-    unit: ""
+    unit: "",
+    balance: ""
   });
 
   const { getSets, getItemsBySetId } = useTempStorage();
@@ -65,7 +66,7 @@ export default function FirstTab({ selectedType }) {
   );
 
   const clearProduct = () => {
-    setProduct({ itemid: "", code: "", description: "", barcode: "", price: "", unit: "" });
+    setProduct({ itemid: "", code: "", description: "", barcode: "", price: "", unit: "", balance: "" });
     setQtyValue("");
   };
 
@@ -77,7 +78,8 @@ export default function FirstTab({ selectedType }) {
         description: item.description,
         barcode: item.barcode || "",
         price: item.price || "",
-        unit: item.unit || ""
+        unit: item.unit || "",
+        balance: item.balance || ""
       });
     } else {
       setProduct({
@@ -86,7 +88,8 @@ export default function FirstTab({ selectedType }) {
         description: "",
         barcode: "",
         price: "",
-        unit: ""
+        unit: "",
+        balance: ""
       });
     }
   };
@@ -111,29 +114,31 @@ export default function FirstTab({ selectedType }) {
 
   const handleBarcodeScanned = async (data) => {
     setIsScanning(false);
-    const sql = `select it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price,
+    const sql = `select it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price, fnqty.QtyProvision balance,
                  munit.Descr unit from item it inner join itembarcode ibc on ibc.itemid = it.id
                  left join MATMESUNIT munit on munit.CodeID = ibc.SecUnit_Id
                  outer apply(select top(1) itemid,price from ITEMPRLIST ItePrList
                  inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID
                  inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID
                  where prList.CodeID=:0 and itemid=it.id order by prList.type desc) as PrLst
-                 where ibc.barcode=:1`;
-    const result = await fetchItem(sql, [priceList, data]);
+                 inner join (select * from fnQtyProvision1(year(getdate())) where WhLCodeID=:1) fnqty on fnqty.IteID=it.id
+                 where ibc.barcode=:2`;
+    const result = await fetchItem(sql, [priceList, branch, data]);
     populateItemFields({ ...result, barcode: data });
   };
 
   const handleCodeSearch = async (data) => {
     setIsPopupVisible(false);
-    const sql = `select top(1) it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price,
+    const sql = `select top(1) it.id, it.code, it.description, isnull(prlst.price, it.Retail_Price) price, fnqty.QtyProvision balance,
                  ibc.barcode from item it
                  outer apply(select top(1) itemid,price from ITEMPRLIST ItePrList
                  inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID
                  inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID
                  where prList.CodeID=:0 and itemid=it.id) as PrLst
                  left join itembarcode ibc on ibc.itemid=it.id
-                 where it.code=:1 or ibc.barcode=:2`;
-    const result = await fetchItem(sql, [priceList, data, data]);
+                 inner join (select * from fnQtyProvision1(year(getdate())) where WhLCodeID=:1) fnqty on fnqty.IteID=it.id
+                 where it.code=:2 or ibc.barcode=:3`;
+    const result = await fetchItem(sql, [priceList, branch, data, data]);
     populateItemFields(result);
     setPopupInputValue("");
   };
@@ -170,6 +175,7 @@ export default function FirstTab({ selectedType }) {
         <InfoRow label="Μον. Μέτρ:" value={product.unit} />
         <InfoRow label="Τιμή:" value={product.price} />
         <InfoRow label="Barcode:" value={product.barcode} />
+        <InfoRow label="Διαθ. Υπ:" value={product.balance} />
         <View style={styles.row}>
           <Text style={styles.caption}>Ποσότητα:</Text>
           <TextInput

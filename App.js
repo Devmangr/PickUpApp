@@ -3,12 +3,13 @@ import { AppProvider } from './components/AppContext';
 import { SafeAreaView} from "react-native-safe-area-context";
 //import { Button, View, Alert } from 'react-native';
 import MainStackNavigator from './MainStackNavigator';
-
+import { useVersionCheck } from './components/useVersionCheck';
 import { AppRegistry } from 'react-native';
 import { name as appName } from './app.json';
 //import { getRealm }  from './database/realmConfig';
 
 const App = () => {
+  useVersionCheck();
   /*const clearTempData = async () => {
     try {
       const realm = await getRealm();

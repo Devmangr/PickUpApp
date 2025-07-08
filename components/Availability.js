@@ -190,7 +190,7 @@ export default function Availability() {
         </Pressable>
       </View>
       {isScanning ? (
-        <BarcodeComponent onBarCodeScanned={handleBarcodeScanned} />
+        <BarcodeComponent onBarCodeScanned={handleBarcodeScanned} onClose={() => setIsScanning(false)}/>
       ) : null}
 
       <Modal
