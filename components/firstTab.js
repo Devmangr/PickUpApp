@@ -121,7 +121,7 @@ export default function FirstTab({ selectedType }) {
                  inner join PriceListDim PrLstDim on PrLstDim.ID=ItePrList.PrListDimID
                  inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID
                  where prList.CodeID=:0 and itemid=it.id order by prList.type desc) as PrLst
-                 inner join (select * from fnQtyProvision1(year(getdate())) where WhLCodeID=:1) fnqty on fnqty.IteID=it.id
+                 left join (select * from fnQtyProvision1(year(getdate())) where WhLCodeID=:1) fnqty on fnqty.IteID=it.id
                  where ibc.barcode=:2`;
     const result = await fetchItem(sql, [priceList, branch, data]);
     populateItemFields({ ...result, barcode: data });
@@ -136,7 +136,7 @@ export default function FirstTab({ selectedType }) {
                  inner join PRICELIST prList on prList.CodeID=ItePrList.PrListCodeID
                  where prList.CodeID=:0 and itemid=it.id) as PrLst
                  left join itembarcode ibc on ibc.itemid=it.id
-                 inner join (select * from fnQtyProvision1(year(getdate())) where WhLCodeID=:1) fnqty on fnqty.IteID=it.id
+                 left join (select * from fnQtyProvision1(year(getdate())) where WhLCodeID=:1) fnqty on fnqty.IteID=it.id
                  where it.code=:2 or ibc.barcode=:3`;
     const result = await fetchItem(sql, [priceList, branch, data, data]);
     populateItemFields(result);
