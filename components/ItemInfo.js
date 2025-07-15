@@ -12,6 +12,8 @@ import {
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 import BarcodeComponent from "./scanner";
+import InfoRow from './InfoRow';
+import PopupInput from './PopupInput';
 
 export default function ItemInfo() {
   const { wsHost, wsPort, wsUser, wsPass, wsRoot, branch, priceList } =
@@ -163,70 +165,31 @@ export default function ItemInfo() {
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
+        <InfoRow label="Κωδικός:" value={labelCode} />
+        <InfoRow label="Περιγραφή:" value={itemDescr} />
         <View style={styles.row}>
-          <Text style={styles.caption}>Κωδικός:</Text>
-          <Text style={styles.rowdata}>{labelCode}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Περιγραφή:</Text>
-          <Text style={styles.rowdata}>{itemDescr}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "600",
-              width: "100%",
-              textAlign: "center",
-            }}
-          >
+          <Text style={{ fontSize: 18, fontWeight: "600", width: "100%", textAlign: "center" }}>
             Στοιχεία Τελευταίας Αγοράς
           </Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Επωνυμία:</Text>
-          <Text style={styles.rowdata}>{labelDescr}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Τελ. Ημ/νία:</Text>
-          <Text style={styles.rowdata}>{lastDocdate}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Τελ. Τιμή:</Text>
-          <Text style={styles.rowdata}>{lastBuyPrice}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Τελ. Ποσότητα:</Text>
-          <Text style={styles.rowdata}>{lastBuyQty}</Text>
-        </View>
+        <InfoRow label="Επωνυμία:" value={labelDescr} />
+        <InfoRow label="Τελ. Ημ/νία:" value={lastDocdate} />
+        <InfoRow label="Τελ. Τιμή:" value={lastBuyPrice} />
+        <InfoRow label="Τελ. Ποσότητα:" value={lastBuyQty} />
       </View>
-      <View style={[styles.contentContainer, { marginTop: 10 }]}>
+      <View style={[styles.contentContainer, { marginTop: 10 }]}> 
         <View style={styles.row}>
-          <Text
-            style={{
-              fontSize: 18,
-              fontWeight: "600",
-              width: "100%",
-              textAlign: "center",
-            }}
-          >
+          <Text style={{ fontSize: 18, fontWeight: "600", width: "100%", textAlign: "center" }}>
             Στοιχεία Πώλησης
           </Text>
         </View>
         <View style={styles.row}>
           <Text>Υπόλοιπο Καταστήματος: {itemBal}</Text>
         </View>
-        {/* Δυναμική απεικόνιση των στοιχείων του itRetail */}
         {retailItems.map((item, index) => (
-          <View style={styles.row} key={index}>
-            <Text style={styles.caption}>Λιανική Τιμή:</Text>
-            <Text style={styles.rowdata}>
-              {item.Retail} {item.matDescr && <Text>{item.matDescr}</Text>}
-            </Text>
-          </View>
+          <InfoRow key={index} label="Λιανική Τιμή:" value={`${item.Retail} ${item.matDescr || ''}`} />
         ))}
       </View>
-
       <View style={styles.buttonContainer}>
         <Pressable onPress={() => setIsPopupVisible(true)}>
           <Text style={styles.btnCode}>Κωδικός</Text>
@@ -238,42 +201,13 @@ export default function ItemInfo() {
       {isScanning ? (
         <BarcodeComponent onBarCodeScanned={handleBarcodeScanned} onClose={() => setIsScanning(false)}/>
       ) : null}
-
-      <Modal
-        transparent={false}
-        animationType="slide"
+      <PopupInput
         visible={isPopupVisible}
-        onRequestClose={() => setIsPopupVisible(false)}
-      >
-        <View style={styles.popupContainer}>
-          <View style={styles.popupDataContainer}>
-            <View style={styles.popup}>
-              <Text style={styles.textInputLabel}>Δώσε κωδικό αναζήτησης</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Κωδικός..."
-                value={popupInputValue}
-                onChangeText={(text) => setPopupInputValue(text)}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.buttonPopupContainer}>
-              <TouchableOpacity
-                style={styles.popupSearchButton}
-                onPress={() => handleCodeSearch(popupInputValue)}
-              >
-                <Text style={styles.popupButtonText}>Αναζήτηση</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.popupCancelButton}
-                onPress={handleCancelPopup}
-              >
-                <Text style={styles.popupButtonText}>Άκυρο</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        value={popupInputValue}
+        onChange={setPopupInputValue}
+        onSearch={() => handleCodeSearch(popupInputValue)}
+        onCancel={handleCancelPopup}
+      />
     </View>
   );
 }

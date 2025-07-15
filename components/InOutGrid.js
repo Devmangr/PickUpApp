@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Modal,
 } from "react-native";
 import AvailabilityModal from "./AvailabilityModal";
+import React, { useCallback } from "react";
 
-const InOutSupTable = ({ combinedData }) => {
+const InOutSupTable = React.memo(({ combinedData }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectdItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const handleRowPress = (item) => {
     setSelectedItem(item);
@@ -23,44 +24,51 @@ const InOutSupTable = ({ combinedData }) => {
     setSelectedItem(null);
   };
 
+  const renderItem = useCallback(({ item }) => (
+    <TouchableOpacity onPress={() => handleRowPress(item)}>
+      <View style={styles.tableRow}>
+        <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
+          {item.code}
+        </Text>
+        <Text style={[styles.cellText, styles.colDescription]}>
+          {item.Description}
+        </Text>
+        <Text style={[styles.cellTextBalance, styles.colInqty]}>
+          {item.inQty}
+        </Text>
+        <Text style={[styles.cellTextBalance, styles.colOutqty]}>
+          {item.outQty}
+        </Text>
+        <Text style={[styles.cellTextBalance, styles.colBal]}>
+          {item.bal}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  ), [handleRowPress]);
+
   return (
     <View style={styles.tableContainer}>
-      {/* Table Header */}
+      {/* Header */}
       <View style={styles.tableHeader}>
         <Text style={[styles.headerText, styles.colCode]}>Κωδ.</Text>
-        <Text style={[styles.headerText, styles.colDescription]}>
-          Περιγραφή
-        </Text>
+        <Text style={[styles.headerText, styles.colDescription]}>Περιγραφή</Text>
         <Text style={[styles.headerText, styles.colInqty]}>Αγορ.</Text>
         <Text style={[styles.headerText, styles.colOutqty]}>Πωλ.</Text>
         <Text style={[styles.headerText, styles.colBal]}>Υπόλ.</Text>
       </View>
 
-      {/* Table Rows */}
-      <ScrollView>
-        {combinedData.map((item, index) => (
-          <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
-            <View key={index} style={styles.tableRow}>
-              <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
-                {item.code}
-              </Text>
-              <Text style={[styles.cellText, styles.colDescription]}>
-                {item.Description}
-              </Text>
-              <Text style={[styles.cellTextBalance, styles.colInqty]}>
-                {item.inQty}
-              </Text>
-              <Text style={[styles.cellTextBalance, styles.colOutqty]}>
-                {item.outQty}
-              </Text>
-              <Text style={[styles.cellTextBalance, styles.colBal]}>
-                {item.bal}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-      {/* Modal for Availability */}
+      {/* Rows */}
+      <FlatList
+        data={combinedData}
+        keyExtractor={(item, index) => `${item.code}-${index}`}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 80 }}
+        initialNumToRender={20}
+        windowSize={10}
+        removeClippedSubviews={true}
+      />
+
+      {/* Modal */}
       <Modal
         transparent={false}
         animationType="slide"
@@ -68,13 +76,13 @@ const InOutSupTable = ({ combinedData }) => {
         onRequestClose={handleCloseModal}
       >
         <AvailabilityModal
-          selectedItem={selectdItem}
+          selectedItem={selectedItem}
           onClose={handleCloseModal}
         />
       </Modal>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   tableContainer: {
@@ -123,16 +131,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   colDescription: {
-    flex: 2.5, // Πλατύτερη στήλη για την περιγραφή
+    flex: 2.5,
   },
   colInqty: {
-    flex: 0.5, // Στήλες ίδιου μεγέθους για Αγορ., Πωλ., Υπόλ.
+    flex: 0.5,
   },
   colOutqty: {
-    flex: 0.5, // Στήλες ίδιου μεγέθους για Αγορ., Πωλ., Υπόλ.
+    flex: 0.5,
   },
   colBal: {
-    flex: 0.5, // Στήλες ίδιου μεγέθους για Αγορ., Πωλ., Υπόλ.
+    flex: 0.5,
   },
 });
 

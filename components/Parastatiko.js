@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TextInput, Alert, Button } from "react-native";
 import { Dropdown } from 'react-native-element-dropdown';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
 import { useTempStorage } from '../database/useTempStorage';
+import FormRow from './FormRow';
+import DateInputRow from './DateInputRow';
 
 const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppliers = [] }) => {
   const [seriecode, setSeriecode] = useState("");
@@ -263,7 +265,7 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
   return (
     <View style={styles.container}>
       {selectedType != "inventory" && selectedType != "ordersup" && selectedType != "intmovement" && (
-        <View style={styles.row}>
+        <FormRow label="Προμηθευτής:">
           <Dropdown
             style={styles.dropdown}
             data={supplierDropdownData.map((sup) => ({ label: sup.name, value: sup.id }))}
@@ -275,11 +277,10 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
             value={selectedSupplierId}
             onChange={item => updateSelectSup(item.value)}
           />
-        </View>
+        </FormRow>
       )}
       {selectedType === "intmovement" && (
-        <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Κατάστημα:</Text>
+        <FormRow label="Κατάστημα:">
           <Dropdown
             style={styles.dropdown}
             data={stores.map((store) => ({ label: store.name, value: store.id }))}
@@ -291,50 +292,43 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
             value={selectedStoreId}
             onChange={(item) => setSelectedStoreId(item.value)}
           />
-        </View>
+        </FormRow>
       )}
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>Ημερομηνία:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ημερομηνία.."
-          value={selectedDate.toISOString().split("T")[0]}
-          onTouchStart={() => setShowDatePicker(true)}
+      <DateInputRow
+        label="Ημερομηνία:"
+        value={selectedDate.toISOString().split("T")[0]}
+        onPress={() => setShowDatePicker(true)}
+      />
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
         />
-        {showDatePicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-      </View>
+      )}
       {selectedType === "receiving" && (
-        <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Αριθμός:</Text>
+        <FormRow label="Αριθμός:">
           <TextInput
             style={styles.input}
             placeholder="Αριθμός.."
             value={docnumber}
             onChangeText={(text) => setDocnumber(text)}
           />
-        </View>
+        </FormRow>
       )}
       {selectedType === "receiving" && (
-        <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Σειρά:</Text>
+        <FormRow label="Σειρά:">
           <TextInput
             style={styles.input}
             placeholder="Σειρά.."
             value={seriecode || "."}
             onChangeText={(text) => setSeriecode(text)}
           />
-        </View>
+        </FormRow>
       )}
       {selectedType === "ordersup" && (
-        <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Παρατηρήσεις:</Text>
+        <FormRow label="Παρατηρήσεις:">
           <TextInput
             style={styles.input}
             placeholder="Παρατηρήσεις..."
@@ -343,7 +337,7 @@ const ParastatikoDetail = ({ selectedType, sendPurchase: propSendPurchase, suppl
             multiline
             numberOfLines={3}
           />
-        </View>
+        </FormRow>
       )}
       <View style={styles.buttonContainer}>
         <Button

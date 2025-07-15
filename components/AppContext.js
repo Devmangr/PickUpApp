@@ -1,90 +1,97 @@
-import React,{ createContext, useContext, useEffect, useState } from "react";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [itemData, setItemData] = useState([]);
-  const [wsHost, setWsHost] = useState('');
-  const [wsPort, setWsPort] = useState('');
-  const [wsRoot, setWsRoot] = useState('');
-  const [wsUser, setWsUser] = useState('');
-  const [wsPass, setWsPass] = useState('');
-  const [seriesM, setSeriesM] = useState('');
-  const [seriesT, setSeriesT] = useState('');
-  const [priceList, setPriceList] = useState('');
-  const [branch, setBranch] = useState('');
-  const [branches, setBranches] = useState([]);
-  const [branchDescr, setBranchDescr] = useState('');
-  const [selectSup, setSelectSup] = useState('');
+  const [state, setState] = useState({
+    itemData: [],
+    wsHost: "",
+    wsPort: "",
+    wsRoot: "",
+    wsUser: "",
+    wsPass: "",
+    seriesM: "",
+    seriesT: "",
+    priceList: "",
+    branch: "",
+    branches: [],
+    branchDescr: "",
+    selectSup: "",
+  });
 
-  const handleQuantityChange = (updatedData) => {
-    setItemData(updatedData);
-  }
+  const setField = useCallback((key, value) => {
+    setState((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
-  const updateWsHost = (newWsHost) => {
-    setWsHost(newWsHost)
-  }
-  const updateWsPort = (newWsPort) => {
-    setWsPort(newWsPort)
-  }
-  const updateWsRoot = (newWsRoot) => {
-    setWsRoot(newWsRoot)
-  }
-  const updateWsUser = (newWsUser) => {
-    setWsUser(newWsUser)
-  }
-  const updateWsPass = (newWsPass) => {
-    setWsPass(newWsPass)
-  }
-  const updateSeriesM = (newSeriesM) => {
-    setSeriesM(newSeriesM);
-  }
-  const updateSeriesT = (newSeriesT) => {
-    setSeriesT(newSeriesT);
-  }
-  const updatePriceList = (newPriceList) => {
-    setPriceList(newPriceList);
-  }
-  const updateBranch = (newBranch) => {
-    setBranch(newBranch);
-  }
-  const updateSelectSup = (newSup) => {
-    setSelectSup(newSup);
-  }
+  const handleQuantityChange = useCallback((updatedData) => {
+    setField("itemData", updatedData);
+  }, [setField]);
+
+  const updateSelectSup = useCallback((val) => setField("selectSup", val), [setField]);
+  const updateWsHost = useCallback((val) => setField("wsHost", val), [setField]);
+  const updateWsPort = useCallback((val) => setField("wsPort", val), [setField]);
+  const updateWsRoot = useCallback((val) => setField("wsRoot", val), [setField]);
+  const updateWsUser = useCallback((val) => setField("wsUser", val), [setField]);
+  const updateWsPass = useCallback((val) => setField("wsPass", val), [setField]);
+  const updateSeriesM = useCallback((val) => setField("seriesM", val), [setField]);
+  const updateSeriesT = useCallback((val) => setField("seriesT", val), [setField]);
+  const updatePriceList = useCallback((val) => setField("priceList", val), [setField]);
+  const updateBranch = useCallback((val) => setField("branch", val), [setField]);
+
+  const contextValue = useMemo(() => ({
+    ...state,
+    handleQuantityChange,
+    updateSelectSup,
+    updateWsHost,
+    updateWsPort,
+    updateWsRoot,
+    updateWsUser,
+    updateWsPass,
+    updateSeriesM,
+    updateSeriesT,
+    updatePriceList,
+    updateBranch,
+  }), [state, handleQuantityChange, updateSelectSup, updateWsHost, updateWsPort, updateWsRoot, updateWsUser, updateWsPass, updateSeriesM, updateSeriesT, updatePriceList, updateBranch]);
 
   const initializeSettings = async () => {
-    try{
-      const savedWsHost = await AsyncStorage.getItem('wsHost');
-      const savedWsPort = await AsyncStorage.getItem('wsPort');
-      const savedWsRoot = await AsyncStorage.getItem('wsRoot');
-      const savedWsUser = await AsyncStorage.getItem('wsUser');
-      const savedWsPass = await AsyncStorage.getItem('wsPass');
-      const savedSeriesM = await AsyncStorage.getItem('seriesM');
-      const savedSeriesT = await AsyncStorage.getItem('seriesT');
-      const savedPriceList = await AsyncStorage.getItem('priceList');
-      
-      const savedBranches = await AsyncStorage.getItem('branches');
-      const parsedBranches = await JSON.parse(savedBranches) || [];
-      setBranches(parsedBranches);
-      
-      const savedBranchCodeid = await AsyncStorage.getItem('branch');
-      
-      const savedBranchDescription = (parsedBranches.find(br => br.codeid === Number(savedBranchCodeid)) || {}).description || '';
-      
-      setBranch(savedBranchCodeid);
-      setBranchDescr(savedBranchDescription);
-      setWsHost(savedWsHost || '');
-      setWsPort(savedWsPort || '');
-      setWsRoot(savedWsRoot || '');
-      setWsUser(savedWsUser || '');
-      setWsPass(savedWsPass || '');
-      setSeriesM(savedSeriesM || '');
-      setSeriesT(savedSeriesT || '');
-      setPriceList(savedPriceList || '');
-      
+    try {
+      const keys = [
+        "wsHost",
+        "wsPort",
+        "wsRoot",
+        "wsUser",
+        "wsPass",
+        "seriesM",
+        "seriesT",
+        "priceList",
+        "branch",
+        "branches"
+      ];
+
+      const stores = await AsyncStorage.multiGet(keys);
+      const data = Object.fromEntries(stores);
+
+      const parsedBranches = JSON.parse(data.branches || "[]");
+      const branchDescr =
+        parsedBranches.find((b) => b.codeid === Number(data.branch))?.description || "";
+
+      setState((prev) => ({
+        ...prev,
+        wsHost: data.wsHost || "",
+        wsPort: data.wsPort || "",
+        wsRoot: data.wsRoot || "",
+        wsUser: data.wsUser || "",
+        wsPass: data.wsPass || "",
+        seriesM: data.seriesM || "",
+        seriesT: data.seriesT || "",
+        priceList: data.priceList || "",
+        branch: data.branch || "",
+        branches: parsedBranches,
+        branchDescr,
+      }));
     } catch (error) {
-      console.log('Error initializing setting: ', error)
+      console.error("❌ Σφάλμα κατά το αρχικό φόρτωμα ρυθμίσεων:", error);
     }
   };
 
@@ -93,39 +100,10 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   return (
-    <AppContext.Provider
-      value={{
-        selectSup,
-        updateSelectSup,
-        itemData,
-        handleQuantityChange,
-        wsHost,
-        updateWsHost,
-        wsPort,
-        updateWsPort,
-        wsRoot,
-        updateWsRoot,
-        wsUser,
-        updateWsUser,
-        wsPass,
-        updateWsPass,
-        seriesM,
-        updateSeriesM,
-        seriesT,
-        updateSeriesT,
-        priceList,
-        updatePriceList,
-        branch,
-        updateBranch,
-        branches,
-        branchDescr        
-      }}
-    >
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );
 };
 
-export const useAppContext = () => {
-  return useContext(AppContext);
-};
+export const useAppContext = () => useContext(AppContext);

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { TabView, TabBar, SceneMap } from "react-native-tab-view";
+import { TabView, TabBar } from "react-native-tab-view";
 import { View } from "react-native";
 import GridComponent from "../components/gridComponent";
 import FirstTab from "../components/firstTab";
@@ -7,23 +7,29 @@ import ParastatikoDetail from "../components/Parastatiko";
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppContext } from "../components/AppContext";
 
-const FirstRoute = ({ selectedType }) => (
-  <View style={{ flex: 1 }}>
-    <FirstTab selectedType={selectedType} />
-  </View>
-);
+const FirstRoute = ({ selectedType }) => {
+  return (
+    <View style={{ flex: 1 }}>
+      <FirstTab selectedType={selectedType} />
+    </View>
+  );
+};
 
-const SecondRoute = () => (
-  <View style={{ flex: 1 }}>
-    <GridComponent />
-  </View>
-);
+const SecondRoute = () => {
+  return (
+    <View style={{ flex: 1 }}>
+      <GridComponent />
+    </View>
+  );
+};
 
-const ThirdRoute = ({ selectedType }) => (
-  <View style={{ flex: 1 }}>
-    <ParastatikoDetail selectedType={selectedType} />
-  </View>
-);
+const ThirdRoute = ({ selectedType }) => {
+  return (
+    <View style={{ flex: 1 }}>
+      <ParastatikoDetail selectedType={selectedType} />
+    </View>
+  );
+};
 
 const TabViewExample = ({ route }) => {
   const { selectedType } = route.params || {};

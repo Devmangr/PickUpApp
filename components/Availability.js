@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -8,14 +8,13 @@ import {
   Modal,
   TouchableOpacity,
   Alert,
-  FlatList,
 } from "react-native";
 import BarcodeComponent from "./scanner";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
 import AvailabilityGrid from "./AvailabilityGrid";
 
-export default function Availability() {
+const Availability = () => {
   const { wsHost, wsPort, wsUser, wsPass } = useAppContext();
   const [isScanning, setIsScanning] = useState(false);
   const [labelCode, setLabelCode] = useState("");
@@ -24,133 +23,84 @@ export default function Availability() {
   const [combinedData, setCombinedData] = useState([]);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupInputValue, setPopupInputValue] = useState("");
-  const API_ENDPOINT = `http://${wsHost}:${wsPort}/root/DBDataSetValues`;
-  const API_ENDPOINTOE = `http://${wsHost}:${wsPort}/oe/DBDataSetValues`;
-  const API_ENDPOINTZER = `http://${wsHost}:${wsPort}/zer/DBDataSetValues`;
 
-  const startScanner = () => {
-    setIsScanning(true);
+  const endpoints = [
+    `http://${wsHost}:${wsPort}/root/DBDataSetValues`,
+    `http://${wsHost}:${wsPort}/oe/DBDataSetValues`,
+    `http://${wsHost}:${wsPort}/zer/DBDataSetValues`,
+  ];
+
+  const fetchFromEndpoints = async (params, isBarcode = true) => {
+    const sql = isBarcode
+      ? `SELECT it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision
+         FROM item it
+         LEFT JOIN itembarcode ibc ON ibc.itemid = it.id
+         LEFT JOIN (SELECT IteID, WhLCodeID, QtyProvision FROM fnQtyProvision0(YEAR(GETDATE()))) AS fnqty
+         ON fnqty.iteid = it.id
+         INNER JOIN whlocation AS WHL ON fnqty.WhLCodeID = Whl.CodeId
+         WHERE ibc.BarCode =:0
+         GROUP BY it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision`
+      : `SELECT it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision
+         FROM item it
+         LEFT JOIN itembarcode ibc ON ibc.itemid = it.id
+         LEFT JOIN (SELECT IteID, WhLCodeID, QtyProvision FROM fnQtyProvision0(YEAR(GETDATE()))) AS fnqty
+         ON fnqty.iteid = it.id
+         INNER JOIN whlocation AS WHL ON fnqty.WhLCodeID = Whl.CodeId
+         WHERE it.code=:1 OR ibc.BarCode =:2
+         GROUP BY it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision`;
+
+    const body = JSON.stringify({
+      sql,
+      dbfqr: true,
+      params,
+    });
+
+    try {
+      const responses = await Promise.all(
+        endpoints.map((endpoint) =>
+          fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
+            },
+            body,
+          })
+        )
+      );
+
+      const jsonData = await Promise.all(responses.map((res) => res.json()));
+      return jsonData.flat().filter(Boolean);
+    } catch (error) {
+      console.error("API Error:", error);
+      Alert.alert("Σφάλμα", `Αποτυχία σύνδεσης: ${error.message}`);
+      return [];
+    }
   };
 
   const handleBarcodeScanned = async (data) => {
     setIsScanning(false);
-    const body = JSON.stringify({
-      sql: "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where ibc.BarCode =:0 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision",
-      dbfqr: true,
-      params: [data],
-    });
-    try {
-      const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
-
-      const [response1, response2, response3] = await Promise.all(
-        endpoints.map((endpoint) =>
-          fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
-            },
-            body: body,
-          })
-        )
-      );
-      const [data1, data2, data3] = await Promise.all([
-        response1.json(),
-        response2.json(),
-        response3.json(),
-      ]);
-
-      const compineData = [
-        ...(Array.isArray(data1) ? data1 : []),
-        ...(Array.isArray(data2) ? data2 : []),
-        ...(Array.isArray(data3) ? data3 : []),
-      ];
-
-      if (compineData.length > 0) {
-        setLabelCode(compineData[0].code);
-        setLabelDescr(compineData[0].description);
-        setLabelBarcode(data);
-        setCombinedData(compineData);
-      } else {
-        setLabelCode("Δεν βρέθηκε προϊόν");
-        setLabelDescr("");
-        setLabelBarcode(data);
-        setCombinedData([]);
-      }
-    } catch (error) {
-      Alert.alert(
-        "Σφάλμα",
-        `Σφάλμα στην αναζήτηση barcode. Μήνυμα: ${error}. `,
-        [
-          {
-            text: "Ok",
-            onPress: () => console.error("Error calling API", error),
-          },
-        ]
-      );
-    }
+    const results = await fetchFromEndpoints([data], true);
+    updateProductState(results, data);
   };
 
   const handleCodeSearch = async (data) => {
     setIsPopupVisible(false);
-
-    const body = JSON.stringify({
-      sql: "select it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision from item it left join itembarcode ibc on ibc.itemid = it.id left join (select IteID, WhLCodeID, QtyProvision from fnQtyProvision0(year(getdate()))) as fnqty on fnqty.iteid = it.id Inner join [whlocation] AS [WHL] ON (fnqty.WhLCodeID=Whl.CodeId) where it.code=:1 or ibc.BarCode =:2 group by it.code, it.description, fnqty.WhLCodeID, whl.Descr, fnqty.QtyProvision",
-      dbfqr: true,
-      params: [data, data],
-    });
-    try {
-      const endpoints = [API_ENDPOINT, API_ENDPOINTOE, API_ENDPOINTZER];
-
-      const [response1, response2, response3] = await Promise.all(
-        endpoints.map((endpoint) =>
-          fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Basic " + btoa(`${wsUser}:${wsPass}`),
-            },
-            body: body,
-          })
-        )
-      );
-
-      const [data1, data2, data3] = await Promise.all([
-        response1.json(),
-        response2.json(),
-        response3.json(),
-      ]);
-
-      const combinedData = [
-        ...(Array.isArray(data1) ? data1 : []),
-        ...(Array.isArray(data2) ? data2 : []),
-        ...(Array.isArray(data3) ? data3 : []),
-      ];
-
-      if (combinedData.length > 0) {
-        setLabelCode(combinedData[0].code);
-        setLabelDescr(combinedData[0].description);
-        setLabelBarcode(data);
-        setCombinedData(combinedData);
-      } else {
-        setLabelCode("Δεν βρέθηκε προϊόν");
-        setLabelDescr("");
-        setLabelBarcode(data);
-        setCombinedData([]);
-      }
-    } catch (error) {
-      Alert.alert(
-        "Σφάλμα",
-        `Σφάλμα στην αναζήτηση κωδικού. Μήνυμα: ${error}. `,
-        [
-          {
-            text: "Ok",
-            onPress: () => console.error("Error calling API", error),
-          },
-        ]
-      );
-    }
+    const results = await fetchFromEndpoints([data, data], false);
+    updateProductState(results, data);
     setPopupInputValue("");
+  };
+
+  const updateProductState = (dataArray, barcodeOrCode) => {
+    if (dataArray.length > 0) {
+      setLabelCode(dataArray[0].code);
+      setLabelDescr(dataArray[0].description);
+    } else {
+      setLabelCode("Δεν βρέθηκε προϊόν");
+      setLabelDescr("");
+    }
+    setLabelBarcode(barcodeOrCode);
+    setCombinedData(dataArray);
   };
 
   const handleCancelPopup = () => {
@@ -161,37 +111,31 @@ export default function Availability() {
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Κωδικός:</Text>
-          <Text style={styles.rowdata}>{labelCode}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Περιγραφή:</Text>
-          <Text style={styles.rowdata}>{labelDescr}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.caption}>Barcode:</Text>
-          <Text style={styles.rowdata}>{labelBarcode}</Text>
-        </View>
+        <InfoRow label="Κωδικός:" value={labelCode} />
+        <InfoRow label="Περιγραφή:" value={labelDescr} />
+        <InfoRow label="Barcode:" value={labelBarcode} />
       </View>
-      {/* Show store availability */}
+
       <View style={styles.contentContainerStores}>
-        <View style={styles.rowHead}>
-          <Text style={styles.captionHead}>Διαθ. Καταστημάτων</Text>
-        </View>
+        <Text style={styles.captionHead}>Διαθ. Καταστημάτων</Text>
         <AvailabilityGrid combinedData={combinedData} />
       </View>
+
       <View style={styles.buttonContainer}>
         <Pressable onPress={() => setIsPopupVisible(true)}>
           <Text style={styles.btnCode}>Κωδικός</Text>
         </Pressable>
-        <Pressable onPress={startScanner}>
+        <Pressable onPress={() => setIsScanning(true)}>
           <Text style={styles.btnScan}>Scan</Text>
         </Pressable>
       </View>
-      {isScanning ? (
-        <BarcodeComponent onBarCodeScanned={handleBarcodeScanned} onClose={() => setIsScanning(false)}/>
-      ) : null}
+
+      {isScanning && (
+        <BarcodeComponent
+          onBarCodeScanned={handleBarcodeScanned}
+          onClose={() => setIsScanning(false)}
+        />
+      )}
 
       <Modal
         transparent={false}
@@ -201,16 +145,14 @@ export default function Availability() {
       >
         <View style={styles.popupContainer}>
           <View style={styles.popupDataContainer}>
-            <View style={styles.popup}>
-              <Text style={styles.textInputLabel}>Δώσε κωδικό αναζήτησης</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Κωδικός..."
-                value={popupInputValue}
-                onChangeText={(text) => setPopupInputValue(text)}
-                keyboardType="numeric"
-              />
-            </View>
+            <Text style={styles.textInputLabel}>Δώσε κωδικό αναζήτησης</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Κωδικός..."
+              value={popupInputValue}
+              onChangeText={setPopupInputValue}
+              keyboardType="numeric"
+            />
             <View style={styles.buttonPopupContainer}>
               <TouchableOpacity
                 style={styles.popupSearchButton}
@@ -230,151 +172,118 @@ export default function Availability() {
       </Modal>
     </View>
   );
-}
+};
+
+const InfoRow = ({ label, value }) => (
+  <View style={styles.row}>
+    <Text style={styles.caption}>{label}</Text>
+    <Text style={styles.rowdata}>{value}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 10,
   },
   contentContainer: {
-    borderWidth: 0.7,
-    borderRadius: 4,
-    padding: 4,
-    borderColor: "#b1b1b1",
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    paddingBottom: 10,
   },
   contentContainerStores: {
-    padding: 4,
-    marginTop: 10,
     flex: 1,
-  },
-  caption: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginRight: 8,
-    width: "33%",
+    marginTop: 10,
   },
   captionHead: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginRight: 8,
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8,
     textAlign: "center",
   },
   row: {
     flexDirection: "row",
-    alignItems: "center",
+    marginBottom: 6,
     justifyContent: "space-between",
-    marginBottom: 10,
   },
-  rowHead: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  caption: {
+    fontWeight: "bold",
+    fontSize: 14,
   },
   rowdata: {
-    fontSize: 16,
-    textAlign: "left",
-    flex: 1,
+    fontSize: 14,
+    flexShrink: 1,
+    textAlign: "right",
   },
-  inputData: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderRadius: 4,
-    borderWidth: 0.5,
-    paddingHorizontal: 8,
-    flex: 1,
-  },
-  //Style for buttons
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: "110%",
-    position: "absolute",
-    bottom: 0,
-    paddingHorizontal: 15,
-    paddingBottom: 16,
+    justifyContent: "space-around",
+    marginTop: 20,
   },
   btnCode: {
-    backgroundColor: "blue",
-    borderRadius: 8,
+    backgroundColor: "#007BFF",
     color: "white",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    elevation: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   btnScan: {
-    backgroundColor: "blue",
-    borderRadius: 8,
+    backgroundColor: "#28a745",
     color: "white",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 35,
-    fontSize: 16,
-    elevation: 8,
-  },
-  btnSave: {
-    backgroundColor: "green",
-    borderRadius: 8,
-    color: "white",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
+    paddingVertical: 10,
     paddingHorizontal: 20,
-    fontSize: 16,
-    elevation: 8,
+    borderRadius: 6,
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  // Styles for PopUp
   popupContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    backgroundColor: "#fff",
   },
   popupDataContainer: {
-    borderWidth: 0.7,
-    borderRadius: 8,
-    borderColor: "#b1b1b1",
-    padding: 10,
+    width: "90%",
+    padding: 20,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
+    elevation: 5,
   },
-  popup: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  textInputLabel: {
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 15,
   },
   buttonPopupContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: "95%",
-    paddingHorizontal: 10,
+    justifyContent: "space-around",
   },
   popupSearchButton: {
-    backgroundColor: "green",
-    borderRadius: 8,
-    color: "white",
-    alignItems: "center",
-    paddingVertical: 15,
-    marginTop: 20,
-    width: 100,
+    backgroundColor: "#007BFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
   },
   popupCancelButton: {
-    backgroundColor: "red",
-    borderRadius: 8,
-    color: "white",
-    alignItems: "center",
-    paddingVertical: 15,
-    marginTop: 20,
-    width: 100,
+    backgroundColor: "#dc3545",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
   },
   popupButtonText: {
     color: "white",
+    fontWeight: "bold",
   },
 });
+
+export default Availability;

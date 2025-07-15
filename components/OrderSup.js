@@ -9,6 +9,8 @@ import { Dropdown } from 'react-native-element-dropdown';
 import { useTempStorage } from "../database/useTempStorage";
 import { useFocusEffect } from '@react-navigation/native';
 import LoadTempModal from '../components/LoadTempModal';
+import FormRow from './FormRow';
+import DateInputRow from './DateInputRow';
 
 export default function OrderSup({ selectedType }) {
   const { wsHost, wsPort, wsRoot, wsUser, wsPass, branch, updateSelectSup } =
@@ -176,7 +178,7 @@ export default function OrderSup({ selectedType }) {
   return (
     <View style={styles.container}>
       <View style={styles.headContainer}>
-        <View style={styles.row}>
+        <FormRow label="Προμηθευτής:">
           <Dropdown
             style={styles.dropdown}
             data={supplierDropdownData.map((sup) => ({ label: sup.name, value: sup.id }))}
@@ -191,41 +193,33 @@ export default function OrderSup({ selectedType }) {
                 updateSelectSup(item.value);
             }}
           />
-        </View>
-        <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Από:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ημερομηνία.."
-            value={selectedFromDate.toISOString().split("T")[0]}
-            onTouchStart={() => setShowDatePicker1(true)}
+        </FormRow>
+        <DateInputRow
+          label="Από:"
+          value={selectedFromDate.toISOString().split("T")[0]}
+          onPress={() => setShowDatePicker1(true)}
+        />
+        {showDatePicker1 && (
+          <DateTimePicker
+            value={fromDate || selectedFromDate}
+            mode="date"
+            display="default"
+            onChange={handleDateChangeFromDate}
           />
-          {showDatePicker1 && (
-            <DateTimePicker
-              value={fromDate || selectedFromDate}
-              mode="date"
-              display="default"
-              onChange={handleDateChangeFromDate}
-            />
-          )}
-        </View>
-        <View style={styles.row}>
-          <Text style={[styles.caption, styles.alignRight]}>Έως:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ημερομηνία.."
-            value={selectedToDate.toISOString().split("T")[0]}
-            onTouchStart={() => setShowDatePicker2(true)}
+        )}
+        <DateInputRow
+          label="Έως:"
+          value={selectedToDate.toISOString().split("T")[0]}
+          onPress={() => setShowDatePicker2(true)}
+        />
+        {showDatePicker2 && (
+          <DateTimePicker
+            value={toDate || selectedToDate}
+            mode="date"
+            display="default"
+            onChange={handleDateChangeToDate}
           />
-          {showDatePicker2 && (
-            <DateTimePicker
-              value={toDate || selectedToDate}
-              mode="date"
-              display="default"
-              onChange={handleDateChangeToDate}
-            />
-          )}
-        </View>
+        )}
         <View style={styles.row}>
           <View style={styles.buttonContainer}>
             <Button

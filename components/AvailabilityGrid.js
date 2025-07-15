@@ -1,7 +1,23 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useCallback } from "react";
 
-const AvailabilityTable = ({ combinedData }) => {
+const AvailabilityTable = React.memo(({ combinedData }) => {
+  const renderItem = useCallback(({ item }) => (
+    <View style={styles.tableRow}>
+      <Text style={styles.cellText}>{item.WhLCodeID}</Text>
+      <Text style={styles.cellText}>{item.Descr}</Text>
+      <Text style={styles.cellTextBalance}>{item.QtyProvision}</Text>
+    </View>
+  ), []);
+
+  if (!combinedData || combinedData.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Δεν βρέθηκαν διαθέσιμα δεδομένα.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.tableContainer}>
       {/* Table Header */}
@@ -11,28 +27,26 @@ const AvailabilityTable = ({ combinedData }) => {
         <Text style={styles.headerText}>Διαθεσιμότητα</Text>
       </View>
 
-      {/* Table Rows */}
-      <ScrollView>
-        {combinedData.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.cellText}>{item.WhLCodeID}</Text>
-            <Text style={styles.cellText}>{item.Descr}</Text>
-            <Text style={styles.cellTextBalance}>{item.QtyProvision}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      <FlatList
+        data={combinedData}
+        keyExtractor={(item, index) => `${item.WhLCodeID}-${index}`}
+        renderItem={renderItem}
+        initialNumToRender={20}
+        windowSize={10}
+        removeClippedSubviews={true}
+      />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   tableContainer: {
     flex: 1,
-    padding: 16,
+    padding: 12,
+    backgroundColor: "#fff",
   },
   tableHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     backgroundColor: "#f0f0f0",
     borderBottomWidth: 1,
     borderColor: "#000",
@@ -42,27 +56,36 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
     flex: 1,
     textAlign: "center",
   },
   tableRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderColor: "#ccc",
-    paddingVertical: 10,
+    borderColor: "#e0e0e0",
+    paddingVertical: 8,
     paddingHorizontal: 5,
   },
   cellText: {
     flex: 1,
-    textAlign: "left",
-    fontSize: 14,
+    fontSize: 13,
+    textAlign: "center",
   },
   cellTextBalance: {
     flex: 1,
-    textAlign: "right",
+    fontSize: 13,
+    textAlign: "center",
+    fontWeight: "bold",
+    color: "#4caf50",
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+  emptyText: {
     fontSize: 14,
+    color: "#777",
   },
 });
 

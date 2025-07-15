@@ -1,13 +1,25 @@
-import React from "react";
-import { StyleSheet, View, ScrollView, Text, TouchableOpacity, Alert } from "react-native";
-import { Table, Row, Rows } from "react-native-table-component";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 import { useAppContext } from "./AppContext";
+import React, { useCallback } from "react";
 
-const GridComponent = () => {
+const GridComponent = React.memo(() => {
   const { itemData, handleQuantityChange } = useAppContext();
+  const screenWidth = Dimensions.get("window").width;
 
-  const tableHead = ["Κωδικός", "Περιγραφή", "Ποσ.", "Διαγραφή"];
-  const widthArr = [70, 190, 50, 80];
+  const columnWidths = {
+    code: screenWidth * 0.17,
+    name: screenWidth * 0.49,
+    qty: screenWidth * 0.17,
+    delete: screenWidth * 0.17,
+  };
 
   const confirmDelete = (index, itemName) => {
     Alert.alert(
@@ -28,68 +40,68 @@ const GridComponent = () => {
     );
   };
 
-  const tableData = itemData.map((item, index) => [
-    item.code,
-    item.itemName,
-    item.quantity,
-    <TouchableOpacity onPress={() => confirmDelete(index, item.itemName)}>
-      <Text style={styles.deleteButton}>🗑️</Text>
-    </TouchableOpacity>,
-  ]);
+  const renderHeader = () => (
+    <View style={[styles.row, styles.header]}>
+      <Text style={[styles.cell, styles.headerText, { width: columnWidths.code }]}>Κωδικός</Text>
+      <Text style={[styles.cell, styles.headerText, { width: columnWidths.name }]}>Περιγραφή</Text>
+      <Text style={[styles.cell, styles.headerText, { width: columnWidths.qty }]}>Ποσ.</Text>
+      <Text style={[styles.cell, styles.headerText, { width: columnWidths.delete }]}>Διαγραφή</Text>
+    </View>
+  );
+
+  const renderItem = useCallback(({ item, index }) => (
+    <View style={styles.row}>
+      <Text style={[styles.cell, { width: columnWidths.code }]}>{item.code}</Text>
+      <Text style={[styles.cell, { width: columnWidths.name }]}>{item.itemName}</Text>
+      <Text style={[styles.cell, { width: columnWidths.qty }]}>{item.quantity}</Text>
+      <TouchableOpacity
+        style={[styles.cell, { width: columnWidths.delete }]}
+        onPress={() => confirmDelete(index, item.itemName)}
+      >
+        <Text style={styles.deleteButton}>🗑️</Text>
+      </TouchableOpacity>
+    </View>
+  ), [itemData]);
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <Table style={styles.table}>
-          <Row
-            data={tableHead}
-            widthArr={widthArr}
-            style={styles.head}
-            textStyle={styles.headerText}
-          />
-          <Rows
-            data={tableData}
-            widthArr={widthArr}
-            style={styles.row}
-            textStyle={styles.text}
-          />
-        </Table>
-      </View>
-    </ScrollView>
+    <View>
+      {renderHeader()}
+      <FlatList
+        data={itemData}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.code}-${index}`}
+        scrollEnabled={true}
+        initialNumToRender={20}
+        windowSize={10}
+        removeClippedSubviews={true}
+      />
+    </View>
   );
-};
+});
+
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 5,
-    paddingTop: 10,
-  },
-  table: {
-    borderWidth: 0,
-    borderColor: "#c8e1ff",
-    flex: 1,
-  },
-  head: {
-    width: "100%",
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
     height: 40,
+    borderBottomWidth: 0.5,
+    borderColor: "#ddd",
+  },
+  header: {
     backgroundColor: "#f1f8ff",
   },
+  cell: {
+    textAlign: "center",
+    justifyContent: "center",
+  },
   headerText: {
-    fontSize: 13,
     fontWeight: "bold",
-    textAlign: "center",
-  },
-  row: {
-    height: 40,
-  },
-  text: {
-    fontSize: 12,
-    textAlign: "center",
+    fontSize: 13,
   },
   deleteButton: {
-    color: "red",
     fontSize: 18,
+    color: "red",
     textAlign: "center",
   },
 });

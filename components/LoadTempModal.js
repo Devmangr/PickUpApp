@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -12,7 +12,7 @@ import {
 import { useAppContext } from './AppContext';
 import { useTempStorage } from '../database/useTempStorage';
 
-export default function LoadTempModal({ visible, operationType, onCancel }) {
+const LoadTempModal = React.memo(function LoadTempModal({ visible, operationType, onCancel }) {
   const {
     getSets,
     getItemsBySetId,
@@ -113,12 +113,22 @@ export default function LoadTempModal({ visible, operationType, onCancel }) {
     }
   };
 
+  const renderItem = useCallback(({ item }) => (
+    <TouchableOpacity
+      onPress={() => toggleSelect(item.id)}
+      style={styles.row}
+    >
+      <Text>
+        {`${item.supplierName} — ${new Date(item.timestamp).toLocaleString()}`}
+      </Text>
+      <Text>{selectedIds.includes(item.id) ? '✓' : ''}</Text>
+    </TouchableOpacity>
+  ), [selectedIds, toggleSelect]);
 
   return (
     <Modal visible={visible} animationType="slide">
       <View style={styles.container}>
         <Text style={styles.title}>Επιλογή σετ για φόρτωση</Text>
-
         {sets.length === 0 ? (
           <Text style={{ textAlign: 'center', marginTop: 20 }}>
             🚫 Δεν βρέθηκαν αποθηκευμένα σετ.
@@ -127,22 +137,12 @@ export default function LoadTempModal({ visible, operationType, onCancel }) {
           <FlatList
             data={sets}
             keyExtractor={item => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => toggleSelect(item.id)}
-                style={styles.row}
-              >
-                <Text>
-                  {`${item.supplierName} — ${new Date(
-                    item.timestamp
-                  ).toLocaleString()}`}
-                </Text>
-                <Text>{selectedIds.includes(item.id) ? '✓' : ''}</Text>
-              </TouchableOpacity>
-            )}
+            renderItem={renderItem}
+            initialNumToRender={20}
+            windowSize={10}
+            removeClippedSubviews={true}
           />
         )}
-
         <View style={styles.buttons}>
           <Button title="Ακύρωση" onPress={onCancel} />
           <Button title="Φόρτωση" onPress={handleLoad} />
@@ -150,7 +150,9 @@ export default function LoadTempModal({ visible, operationType, onCancel }) {
       </View>
     </Modal>
   );
-}
+});
+
+export default LoadTempModal;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },

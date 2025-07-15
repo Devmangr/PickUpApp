@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput, FlatList } from "react-native";
 import { useAppContext } from "./AppContext";
 import { encode as btoa } from "base-64";
 
-const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
+const InOutSupTable = React.memo(({ combinedData, scannedCode, clearScannedCode }) => {
   const { itemData, handleQuantityChange, priceList } = useAppContext();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectdItem, setSelectedItem] = useState(null);
@@ -20,13 +20,13 @@ const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
     (item.code?.toLowerCase() || '').includes(searchText.toLowerCase())
   );
 
-  const handleRowPress = (item) => {
+  const handleRowPress = useCallback((item) => {
     setSelectedItem(item);
     setIsModalVisible(true);
     setItemid(item.itemid);
     setItemDescr(item.Description);
     setItemCode(item.code);
-  };
+  }, []);
 
   useEffect(() => {
     const fetchItemByBarcode = async (barcode) => {
@@ -119,6 +119,27 @@ const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
     handleCloseModal();
   };
 
+  const renderItem = useCallback(({ item, index }) => (
+    <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
+      <View key={index} style={[styles.tableRow, orderedItems.includes(item.itemid) && styles.orderedRow,]}>
+        <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
+          {item.code}
+        </Text>
+        <Text style={[styles.cellText, styles.colDescription]}>
+          {item.Description}
+        </Text>
+        <Text style={[styles.cellTextBalance, styles.colInqty]}>
+          {item.inQty}
+        </Text>
+        <Text style={[styles.cellTextBalance, styles.colOutqty]}>
+          {item.outQty}
+        </Text>
+        <Text style={[styles.cellTextBalance, styles.colBal]}>
+          {item.bal}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  ), [orderedItems, handleRowPress]);
 
   return (
     <View style={styles.tableContainer}>
@@ -140,31 +161,16 @@ const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
           onChangeText={setSearchText}
         />
       </View>
-
       {/* Table Rows */}
-      <ScrollView>
-        {filteredData.map((item, index) => (
-          <TouchableOpacity key={index} onPress={() => handleRowPress(item)}>
-            <View key={index} style={[styles.tableRow, orderedItems.includes(item.itemid) && styles.orderedRow,]}>
-              <Text style={[styles.cellText, styles.colCode, styles.cellCode]}>
-                {item.code}
-              </Text>
-              <Text style={[styles.cellText, styles.colDescription]}>
-                {item.Description}
-              </Text>
-              <Text style={[styles.cellTextBalance, styles.colInqty]}>
-                {item.inQty}
-              </Text>
-              <Text style={[styles.cellTextBalance, styles.colOutqty]}>
-                {item.outQty}
-              </Text>
-              <Text style={[styles.cellTextBalance, styles.colBal]}>
-                {item.bal}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <FlatList
+        data={filteredData}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.code}-${index}`}
+        contentContainerStyle={{ paddingBottom: 80 }}
+        initialNumToRender={20}
+        windowSize={10}
+        removeClippedSubviews={true}
+      />
       {/* Modal for Orders */}
       <Modal
         transparent={false}
@@ -208,7 +214,7 @@ const InOutSupTable = ({ combinedData, scannedCode, clearScannedCode }) => {
       </Modal>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   tableContainer: {

@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { encode as btoa } from "base-64";
 import { Picker } from "@react-native-picker/picker";
+import FormRow from './FormRow';
 
 const SettingsScreen = () => {
   const {
@@ -161,17 +162,15 @@ const SettingsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>WS Host:</Text>
+      <FormRow label="WS Host:">
         <TextInput
           style={styles.input}
           placeholder="WS Host"
           value={wsHost}
           onChangeText={(text) => updateWsHost(text)}
         />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>WS Port:</Text>
+      </FormRow>
+      <FormRow label="WS Port:">
         <TextInput
           style={styles.input}
           placeholder="WS Port"
@@ -179,36 +178,32 @@ const SettingsScreen = () => {
           onChangeText={(text) => updateWsPort(text)}
           keyboardType="numeric"
         />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>WS Root:</Text>
+      </FormRow>
+      <FormRow label="WS Root:">
         <TextInput
           style={styles.input}
           placeholder="WS Root"
           value={wsRoot}
           onChangeText={(text) => updateWsRoot(text)}
         />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>WS User:</Text>
+      </FormRow>
+      <FormRow label="WS User:">
         <TextInput
           style={styles.input}
           placeholder="WS User"
           value={wsUser}
           onChangeText={(text) => updateWsUser(text)}
         />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>WS Pass:</Text>
+      </FormRow>
+      <FormRow label="WS Pass:">
         <TextInput
           style={styles.input}
           placeholder="WS Pass"
           value={wsPass}
           onChangeText={(text) => updateWsPass(text)}
         />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>Κατάστημα:</Text>
+      </FormRow>
+      <FormRow label="Κατάστημα:">
         <TextInput
           style={styles.input}
           placeholder="Κατάστημα"
@@ -222,9 +217,8 @@ const SettingsScreen = () => {
             source={require("../assets/—Pngtree—vector refresh icon_4187318.png")}
           />
         </Pressable>
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>Σειρές:</Text>
+      </FormRow>
+      <FormRow label="Σειρές:">
         <TextInput
           style={styles.input}
           placeholder="Σειρά Μ"
@@ -237,16 +231,15 @@ const SettingsScreen = () => {
           value={seriesT}
           onChangeText={(text) => updateSeriesT(text)}
         />
-      </View>
-      <View style={styles.row}>
-        <Text style={[styles.caption, styles.alignRight]}>Τιμοκατάλογος:</Text>
+      </FormRow>
+      <FormRow label="Τιμοκατάλογος:">
         <TextInput
           style={styles.input}
           placeholder="Τιμοκατάλογος"
           value={priceList}
           onChangeText={(text) => updatePriceList(text)}
         />
-      </View>
+      </FormRow>
       <View style={styles.buttonContainer}>
         <Pressable onPress={handleSaveSettings}>
           <Text style={styles.btn}>Save</Text>

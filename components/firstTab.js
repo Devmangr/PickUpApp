@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View, Text, TextInput, Pressable, StyleSheet,
-  Modal, TouchableOpacity, Alert
+  Alert
 } from "react-native";
 import BarcodeComponent from "./scanner";
 import { encode as btoa } from "base-64";
@@ -9,6 +9,11 @@ import { useAppContext } from "./AppContext";
 import { useTempStorage } from "../database/useTempStorage";
 import { useFocusEffect } from "@react-navigation/native";
 import LoadTempModal from "./LoadTempModal";
+import FormRow from './FormRow';
+import PopupInput from './PopupInput';
+
+// Constants
+const MAX_QUANTITY = 50;
 
 // 👇 Helper component για γραμμές info
 const InfoRow = ({ label, value }) => (
@@ -23,12 +28,17 @@ export default function FirstTab({ selectedType }) {
   const [popupInputValue, setPopupInputValue] = useState("");
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [availableSets, setAvailableSets] = useState([]);
+  const [showLoadModal, setShowLoadModal] = useState(false);
 
   const {
     itemData, handleQuantityChange,
     wsHost, wsPort, wsRoot, wsUser, wsPass,
     priceList, branch
   } = useAppContext();
+
+
+  const { getSets, getItemsBySetId } = useTempStorage();
 
   const [product, setProduct] = useState({
     itemid: "",
@@ -39,34 +49,31 @@ export default function FirstTab({ selectedType }) {
     unit: "",
     balance: ""
   });
-
-  const { getSets, getItemsBySetId } = useTempStorage();
-  const [availableSets, setAvailableSets] = useState([]);
-  const [showLoadModal, setShowLoadModal] = useState(false);
-
+   
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const sets = await getSets(selectedType);
-        if (sets.length > 0) {
-          setAvailableSets(sets);
-          Alert.alert(
-            'Βρέθηκαν προσωρινά σετ',
-            `Βρέθηκαν ${sets.length} σετ. Θέλεις να τα φορτώσω;`,
-            [
-              { text: 'Όχι', style: 'cancel' },
-              { text: 'Ναι', onPress: () => setShowLoadModal(true) }
-            ]
-          );
-        }
-      })();
-    }, [selectedType])
-  );
+  useFocusEffect(useCallback(() => {
+    (async () => {
+      const sets = await getSets(selectedType);
+      if (sets.length > 0) {
+        setAvailableSets(sets);
+        Alert.alert(
+          "Βρέθηκαν προσωρινά σετ",
+          `Βρέθηκαν ${sets.length} σετ. Θέλεις να τα φορτώσω;`,
+          [
+            { text: "Όχι", style: "cancel" },
+            { text: "Ναι", onPress: () => setShowLoadModal(true) }
+          ]
+        );
+      }
+    })();
+  }, [selectedType]));
 
   const clearProduct = () => {
-    setProduct({ itemid: "", code: "", description: "", barcode: "", price: "", unit: "", balance: "" });
+    setProduct({
+      itemid: "", code: "", description: "", barcode: "",
+      price: "", unit: "", balance: ""
+    });
     setQtyValue("");
   };
 
@@ -83,19 +90,15 @@ export default function FirstTab({ selectedType }) {
       });
     } else {
       setProduct({
-        itemid: "",
-        code: "Δεν βρέθηκε προϊόν",
-        description: "",
-        barcode: "",
-        price: "",
-        unit: "",
-        balance: ""
+        itemid: "", code: "Δεν βρέθηκε προϊόν", description: "",
+        barcode: "", price: "", unit: "", balance: ""
       });
     }
   };
 
   const fetchItem = async (query, params) => {
     try {
+      console.log("fetchItem called", { query, params });
       const response = await fetch(API_ENDPOINT, {
         method: "POST",
         headers: {
@@ -105,6 +108,7 @@ export default function FirstTab({ selectedType }) {
         body: JSON.stringify({ sql: query, dbfqr: true, params })
       });
       const data = await response.json();
+      
       return data?.[0] || null;
     } catch (e) {
       console.error("❌ API error:", e);
@@ -145,8 +149,8 @@ export default function FirstTab({ selectedType }) {
 
   const handleSave = () => {
     const quantity = parseInt(qtyValue, 10) || 0;
-    if (quantity === 0 || quantity > 50) {
-      return Alert.alert("Σφάλμα", "Η ποσότητα πρέπει να είναι μεταξύ 1 και 50");
+    if (quantity === 0 || quantity > MAX_QUANTITY) {
+      return Alert.alert("Σφάλμα", `Η ποσότητα πρέπει να είναι μεταξύ 1 και ${MAX_QUANTITY}`);
     }
     handleQuantityChange([...itemData, {
       itemid: product.itemid,
@@ -176,8 +180,7 @@ export default function FirstTab({ selectedType }) {
         <InfoRow label="Τιμή:" value={product.price} />
         <InfoRow label="Barcode:" value={product.barcode} />
         <InfoRow label="Διαθ. Υπ:" value={product.balance} />
-        <View style={styles.row}>
-          <Text style={styles.caption}>Ποσότητα:</Text>
+        <FormRow label="Ποσότητα:">
           <TextInput
             style={styles.input}
             placeholder="Ποσότητα..."
@@ -185,7 +188,7 @@ export default function FirstTab({ selectedType }) {
             onChangeText={setQtyValue}
             keyboardType="numeric"
           />
-        </View>
+        </FormRow>
       </View>
 
       <View style={styles.buttonContainer}>
@@ -202,35 +205,13 @@ export default function FirstTab({ selectedType }) {
 
       {isScanning && <BarcodeComponent onBarCodeScanned={handleBarcodeScanned} onClose={() => setIsScanning(false)} />}
 
-      <Modal
-        transparent={false}
-        animationType="slide"
+      <PopupInput
         visible={isPopupVisible}
-        onRequestClose={() => setIsPopupVisible(false)}
-      >
-        <View style={styles.popupContainer}>
-          <View style={styles.popupDataContainer}>
-            <View style={styles.popup}>
-              <Text style={styles.textInputLabel}>Δώσε κωδικό</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Κωδικός..."
-                value={popupInputValue}
-                onChangeText={setPopupInputValue}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.buttonPopupContainer}>
-              <TouchableOpacity style={styles.popupSearchButton} onPress={() => handleCodeSearch(popupInputValue)}>
-                <Text style={styles.popupButtonText}>Αναζήτηση</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popupCancelButton} onPress={() => setIsPopupVisible(false)}>
-                <Text style={styles.popupButtonText}>Άκυρο</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        value={popupInputValue}
+        onChange={setPopupInputValue}
+        onSearch={() => handleCodeSearch(popupInputValue)}
+        onCancel={() => setIsPopupVisible(false)}
+      />
 
       <LoadTempModal
         visible={showLoadModal}
@@ -239,6 +220,7 @@ export default function FirstTab({ selectedType }) {
         operationType={selectedType}
         onConfirm={handleLoadSets}
       />
+      
     </View>
   );
 }
