@@ -222,22 +222,24 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   btnCode: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "blue",
     color: "white",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 25,
     borderRadius: 6,
     fontWeight: "bold",
     textAlign: "center",
+    fontSize: 16
   },
   btnScan: {
-    backgroundColor: "#28a745",
+    backgroundColor: "green",
     color: "white",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 35,
     borderRadius: 6,
     fontWeight: "bold",
     textAlign: "center",
+    fontSize: 16
   },
   popupContainer: {
     flex: 1,

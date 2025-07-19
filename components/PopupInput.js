@@ -46,15 +46,16 @@ export default PopupInput;
 const styles = StyleSheet.create({
   popupContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
   popupDataContainer: {
-    borderWidth: 0.7,
-    borderRadius: 8,
-    borderColor: '#b1b1b1',
-    padding: 10,
+    width: "90%",
+    padding: 20,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
+    elevation: 5,
   },
   popup: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Button, Text, TextInput, StyleSheet, Modal, Alert } from "react-native";
+import { View, Button, Text, TextInput, StyleSheet, Modal, Alert, TouchableOpacity } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { encode as btoa } from "base-64";
 import { useAppContext } from "./AppContext";
@@ -222,20 +222,19 @@ export default function OrderSup({ selectedType }) {
         )}
         <View style={styles.row}>
           <View style={styles.buttonContainer}>
-            <Button
-              title="Αναζήτηση"
-              className={`btn ${btnLoading ? "btn-warning" : "btn-success"}`}
+            <TouchableOpacity style={styles.btnSearch}
               onPress={() => handleQuery()}
               disabled={btnLoading}
             >
-              {btnLoading ? "Loading..." : "Αναζήτηση"}
-            </Button>
-            <Button
-              title="Scan"
+              <Text style={styles.btnText}>Αναζήτηση</Text>
+              {/*{btnLoading ? "Loading..." : "Αναζήτηση"}*/}
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.btn}
               onPress={() => setIsScanning(true)}
-              color="blue"
-            >
-            </Button>
+            > 
+              <Text style={styles.btnText}>Scan</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -289,23 +288,32 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     paddingHorizontal: 8,
   },
-  alignRight: {
-    textAlign: "right",
-  },
   buttonContainer: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
+    height:45
   },
   btn: {
     backgroundColor: "green",
-    borderRadius: 8,
-    color: "white",
+    borderRadius: 5,
     textAlign: "center",
-    paddingVertical: 16,
-    fontSize: 20,
-    fontWeight: "bold",
+    paddingVertical: 10,
+    paddingHorizontal: 35,
     elevation: 8,
+  },
+  btnSearch : {
+    backgroundColor: "#03bac6",
+    borderRadius: 5,
+    textAlign: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    elevation: 8,
+  },
+  btnText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16
   },
   dropdown: {
     flex: 1,

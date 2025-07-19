@@ -49,7 +49,7 @@ export default function FirstTab({ selectedType }) {
     unit: "",
     balance: ""
   });
-   
+
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
 
   useFocusEffect(useCallback(() => {
@@ -108,7 +108,7 @@ export default function FirstTab({ selectedType }) {
         body: JSON.stringify({ sql: query, dbfqr: true, params })
       });
       const data = await response.json();
-      
+
       return data?.[0] || null;
     } catch (e) {
       console.error("❌ API error:", e);
@@ -220,7 +220,7 @@ export default function FirstTab({ selectedType }) {
         operationType={selectedType}
         onConfirm={handleLoadSets}
       />
-      
+
     </View>
   );
 }
@@ -250,33 +250,15 @@ const styles = StyleSheet.create({
   },
   btnCode: {
     backgroundColor: "blue", borderRadius: 8, color: "white",
-    paddingVertical: 15, paddingHorizontal: 15, fontSize: 16, elevation: 8,
+    paddingVertical: 15, paddingHorizontal: 15, fontSize: 16, elevation: 5,
   },
   btnScan: {
     backgroundColor: "blue", borderRadius: 8, color: "white",
-    paddingVertical: 15, paddingHorizontal: 35, fontSize: 16, elevation: 8,
+    paddingVertical: 15, paddingHorizontal: 35, fontSize: 16, elevation: 5,
   },
   btnSave: {
     backgroundColor: "green", borderRadius: 8, color: "white",
-    paddingVertical: 15, paddingHorizontal: 20, fontSize: 16, elevation: 8,
+    paddingVertical: 15, paddingHorizontal: 20, fontSize: 16, elevation: 5,
   },
-  popupContainer: {
-    flex: 1, justifyContent: "center", alignItems: "center", padding: 16
-  },
-  popupDataContainer: {borderWidth: 0.7, borderRadius: 8, borderColor: "#b1b1b1", padding: 10,},
-  popup: {flexDirection: "row", alignItems: "center", justifyContent: "center", },
-  textInputLabel: { fontSize: 18, marginBottom: 10 },
-  buttonPopupContainer: {
-    flexDirection: "row", justifyContent: "space-between",
-    width: "95%", paddingHorizontal: 10
-  },
-  popupSearchButton: {
-    backgroundColor: "green", borderRadius: 8, alignItems: "center",
-    paddingVertical: 15, marginTop: 20, width: 100,
-  },
-  popupCancelButton: {
-    backgroundColor: "red", borderRadius: 8, alignItems: "center",
-    paddingVertical: 15, marginTop: 20, width: 100,
-  },
-  popupButtonText: { color: "white" },
+  popup: { flexDirection: "row", alignItems: "center", justifyContent: "center", },
 });
