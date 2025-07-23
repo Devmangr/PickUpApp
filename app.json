@@ -29,7 +29,10 @@
         "android.permission.ACCESS_NETWORK_STATE"
       ],
       "package": "com.itechs.PickUpApp",
-      "versionCode": 20
+      "versionCode": 20,
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
+      "minSdkVersion": 23
     },
     "web": {
       "favicon": "./assets/favicon.png"

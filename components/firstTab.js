@@ -98,7 +98,6 @@ export default function FirstTab({ selectedType }) {
 
   const fetchItem = async (query, params) => {
     try {
-      console.log("fetchItem called", { query, params });
       const response = await fetch(API_ENDPOINT, {
         method: "POST",
         headers: {

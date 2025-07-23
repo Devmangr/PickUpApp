@@ -198,7 +198,7 @@ const InOutSupTable = React.memo(({ combinedData, scannedCode, clearScannedCode 
                 <Text style={{ textAlign: "center", fontSize: 16, fontWeight: "bold", color: "#fff", }}>OK</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.popupCancelButton} onPress={() => handleCloseModal()}>
-                <Text style={styles.popupButtonText}>Άκυρο</Text>
+                <Text style={{ textAlign: "center", fontSize: 16, fontWeight: "bold", color: "#fff", }}>Άκυρο</Text>
               </TouchableOpacity>
             </View>
             {orderedItems.includes(itemid) && (
@@ -274,9 +274,6 @@ const styles = StyleSheet.create({
   colBal: {
     flex: 0.5, // Στήλες ίδιου μεγέθους για Αγορ., Πωλ., Υπόλ.
   },
-  buttonContainer: {
-    flex: 1,
-  },
   btn: {
     backgroundColor: "green",
     borderRadius: 8,
@@ -297,7 +294,7 @@ const styles = StyleSheet.create({
   },
   popupCancelButton: {
     backgroundColor: "red", borderRadius: 8, alignItems: "center",
-    paddingVertical: 15, marginTop: 20, width: 100,
+    paddingVertical: 15, marginTop: 20, width: 100, fontWeight:"bold", color:"#fff"
   },
   input: {
     flex: 1,
@@ -311,20 +308,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
+    backgroundColor: "#fff",
   },
   popupDataContainer: {
-    borderWidth: 0.7,
-    borderRadius: 8,
-    borderColor: "#b1b1b1",
-    padding: 10,
-    width: 300,
-  },
-  popup: {
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    marginTop: 10,
+    width: "90%",
+    padding: 20,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
+    elevation: 5,
   },
   row: {
     flexDirection: "row",

@@ -5,7 +5,7 @@ const DateInputRow = React.memo(function DateInputRow({ label, value, onPress, l
   return (
     <View style={styles.row}>
       <Text style={[styles.label, labelStyle]}>{label}</Text>
-      <TouchableOpacity style={{ flex: 1 }} onPress={onPress}>
+      <TouchableOpacity style={{ flex: 1, height:40 }} onPress={onPress}>
         <TextInput
           style={[styles.input, inputStyle]}
           value={value}
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 40,
+    height: 50,
     borderColor: 'gray',
     borderRadius: 4,
     borderWidth: 0.5,
