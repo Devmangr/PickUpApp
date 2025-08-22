@@ -21,7 +21,9 @@ const HomeScreen = ({ navigation }) => {
       navigation.navigate('Επιστροφή Προϊόντων', { selectedType: type});
     } else if (type === "inventory") {
       navigation.navigate('Απογραφή Προϊόντων', { selectedType: type});
-    } 
+    } else if (type === "appVersionInfo") {
+      navigation.navigate("Πληροφορίες Εφαρμογής")
+    }
     else { 
       navigation.navigate("Main", { selectedType: type });
     }
@@ -83,6 +85,12 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => handleSelection("settings")}
         >
           <Text style={styles.buttonText}>Ρυθμίσεις</Text>
+        </Pressable>
+        <Pressable
+          style={styles.button}
+          onPress={() => handleSelection("appVersionInfo")}
+        >
+          <Text style={styles.buttonText}>Πληροφορίες</Text>
         </Pressable>
       </View>
     </View>

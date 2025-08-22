@@ -68,9 +68,25 @@ export const useTempStorage = () => {
     }));
   };
 
-  const clearSetsForSupplier = async (operationType, supplierId) => {
+  // Νέα συνάρτηση: Διαγραφή συγκεκριμένου set
+  const clearSpecificSet = async (setId) => {
     const realm = realmInstance;
     if (!realm) return;
+    realm.write(() => {
+      // Διαγραφή των items του set
+      const items = realm.objects('TempItem').filtered('setId == $0', setId);
+      realm.delete(items);
+      
+      // Διαγραφή του set
+      const setToDelete = realm.objects('TempSet').filtered('id == $0', setId);
+      realm.delete(setToDelete);
+    });
+  };
+
+  // Παλιά συνάρτηση: Διαγραφή όλων των sets ενός προμηθευτή
+  const clearSetsForSupplier = async (operationType, supplierId) => {
+    const realm = realmInstance;
+    if (!realm) return; 
     realm.write(() => {
       const sets = realm.objects('TempSet').filtered('operationType == $0 AND supplierId == $1', operationType, supplierId);
       sets.forEach(s => {
@@ -95,5 +111,5 @@ export const useTempStorage = () => {
   };
 
 
-  return { saveTempData, getSets, getItemsBySetId, clearSetsForSupplier, getAllSets };
+  return { saveTempData, getSets, getItemsBySetId, clearSetsForSupplier, clearSpecificSet, getAllSets };
 };

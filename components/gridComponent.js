@@ -64,7 +64,7 @@ const GridComponent = React.memo(() => {
   ), [itemData]);
 
   return (
-    <View>
+    <View style={styles.container}>
       {renderHeader()}
       <FlatList
         data={itemData}
@@ -74,13 +74,14 @@ const GridComponent = React.memo(() => {
         initialNumToRender={20}
         windowSize={10}
         removeClippedSubviews={true}
-      />
+      /> 
     </View>
   );
 });
 
 
 const styles = StyleSheet.create({
+  container: { flex: 1, padding: 2 },
   row: {
     flexDirection: "row",
     alignItems: "center",

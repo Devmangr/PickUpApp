@@ -34,7 +34,7 @@ export default function FirstTab({ selectedType }) {
   const {
     itemData, handleQuantityChange,
     wsHost, wsPort, wsRoot, wsUser, wsPass,
-    priceList, branch
+    priceList, branch, updateCurrentSetId
   } = useAppContext();
 
 
@@ -165,6 +165,13 @@ export default function FirstTab({ selectedType }) {
     for (const id of selectedSetIds) {
       const items = await getItemsBySetId(id);
       allItems = allItems.concat(items);
+    }
+    // Αν φορτώθηκε μόνο ένα set, αποθήκευσε το setId
+    if (selectedSetIds.length === 1) {
+      updateCurrentSetId(selectedSetIds[0]);
+    } else {
+      // Αν φορτώθηκαν πολλά sets, δεν έχουμε συγκεκριμένο setId
+      updateCurrentSetId(null);
     }
     handleQuantityChange(allItems);
     setShowLoadModal(false);

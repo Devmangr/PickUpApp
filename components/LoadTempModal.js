@@ -12,7 +12,7 @@ import {
 import { useAppContext } from './AppContext';
 import { useTempStorage } from '../database/useTempStorage';
 
-const LoadTempModal = React.memo(function LoadTempModal({ visible, operationType, onCancel }) {
+const LoadTempModal = React.memo(function LoadTempModal({ visible, operationType, onCancel, onConfirm  }) {
   const {
     getSets,
     getItemsBySetId,
@@ -104,8 +104,16 @@ const LoadTempModal = React.memo(function LoadTempModal({ visible, operationType
 
       const mergedItems = Array.from(groupedItemsMap.values());
 
+      // Ενημέρωση του προμηθευτή
       updateSelectSup(finalSupplierId);
-      handleQuantityChange(mergedItems);
+
+      // Αν υπάρχει onConfirm callback, τη χρησιμοποιούμε
+      if (onConfirm && typeof onConfirm === 'function') {
+        onConfirm(selectedIds);
+      } else {
+        // Fallback στην παλιά μέθοδο
+        handleQuantityChange(mergedItems);
+      }
       onCancel();
     } catch (e) {
       console.error('❌ Error loading selected sets:', e);
@@ -118,10 +126,10 @@ const LoadTempModal = React.memo(function LoadTempModal({ visible, operationType
       onPress={() => toggleSelect(item.id)}
       style={styles.row}
     >
-      <Text>
+      <Text style={styles.supText}>
         {`${item.supplierName} — ${new Date(item.timestamp).toLocaleString()}`}
       </Text>
-      <Text>{selectedIds.includes(item.id) ? '✓' : ''}</Text>
+      <Text style={styles.checked}>{selectedIds.includes(item.id) ? '✓' : ''}</Text>
     </TouchableOpacity>
   ), [selectedIds, toggleSelect]);
 
@@ -168,5 +176,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 20
-  }
+  },
+  supText: {fontSize:14, width:'90%'},
+  checked:{color:'green', fontSize:20}
 });

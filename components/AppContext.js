@@ -17,11 +17,14 @@ export const AppProvider = ({ children }) => {
   const [branches, setBranches] = useState([]);
   const [branchDescr, setBranchDescr] = useState('');
   const [selectSup, setSelectSup] = useState('');
+  const [currentSetId, setCurrentSetId] = useState(null);
 
   const handleQuantityChange = (updatedData) => {
     setItemData(updatedData);
   }
-
+  const updateCurrentSetId = (newSetId) => {
+    setCurrentSetId(newSetId);
+  }
   const updateWsHost = (newWsHost) => {
     setWsHost(newWsHost)
   }
@@ -118,7 +121,9 @@ export const AppProvider = ({ children }) => {
         branch,
         updateBranch,
         branches,
-        branchDescr        
+        branchDescr,
+        currentSetId,
+        updateCurrentSetId,        
       }}
     >
       {children}

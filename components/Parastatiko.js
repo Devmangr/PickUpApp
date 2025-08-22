@@ -8,31 +8,14 @@ import { useTempStorage } from "../database/useTempStorage";
 import FormRow from "./FormRow";
 import DateInputRow from "./DateInputRow";
 
-const ParastatikoDetail = ({
-  selectedType,
-  sendPurchase: propSendPurchase,
-  suppliers = [],
-}) => {
+const ParastatikoDetail = ({selectedType, sendPurchase: propSendPurchase, suppliers = [], currentSetId = null,}) => {
   const [seriecode, setSeriecode] = useState("");
   const [docnumber, setDocnumber] = useState("");
 
   const [supplierDropdownData, setSupplierDropdownData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const {
-    wsHost,
-    wsPort,
-    wsRoot,
-    wsUser,
-    wsPass,
-    seriesM,
-    seriesT,
-    branch,
-    handleQuantityChange,
-    selectSup: selectedSupplierId,
-    updateSelectSup,
-    itemData,
-  } = useAppContext();
+  const {wsHost, wsPort, wsRoot, wsUser, wsPass, seriesM, seriesT, branch, handleQuantityChange, selectSup: selectedSupplierId, updateSelectSup, itemData, } = useAppContext();
   const [remarks, setRemarks] = useState("");
   const API_ENDPOINT = `http://${wsHost}:${wsPort}/${wsRoot}/DBDataSetValues`;
   const [btnLoading, setBtnLoading] = useState(false);
@@ -54,7 +37,7 @@ const ParastatikoDetail = ({
 
   const getStoreById = (id) => stores.find((store) => store.id === Number(id));
 
-  const { saveTempData, clearSetsForSupplier } = useTempStorage();
+  const { saveTempData, clearSetsForSupplier, clearSpecificSet } = useTempStorage();
   const supplierObj =
     supplierDropdownData.find((s) => s.id === selectedSupplierId) || {};
   const supplierName = supplierObj.name || "—";
@@ -144,7 +127,13 @@ const ParastatikoDetail = ({
               },
             ]
           );
-          await clearSetsForSupplier(selectedType, selectedSupplierId);
+          // Διαγραφή του συγκεκριμένου set αντί για όλα τα sets του προμηθευτή
+          if (currentSetId) {
+            await clearSpecificSet(currentSetId);
+          } else {
+            // Fallback στην παλιά μέθοδο αν δεν υπάρχει setId
+            await clearSetsForSupplier(selectedType, selectedSupplierId);
+          }
         }
         return true; // Επιστρέφουμε true σε περίπτωση επιτυχίας
       }

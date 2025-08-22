@@ -24,9 +24,10 @@ const SecondRoute = () => {
 };
 
 const ThirdRoute = ({ selectedType }) => {
+  const { currentSetId } = useAppContext();
   return (
     <View style={{ flex: 1 }}>
-      <ParastatikoDetail selectedType={selectedType} />
+      <ParastatikoDetail selectedType={selectedType} currentSetId={currentSetId} />
     </View>
   );
 };
@@ -40,7 +41,7 @@ const TabViewExample = ({ route }) => {
     { key: "third", title: "Παραστατικό" },
   ]);
 
-  const { updateSelectSup, handleQuantityChange } = useAppContext();
+  const { updateSelectSup, handleQuantityChange, updateCurrentSetId  } = useAppContext();
 
   useFocusEffect(
     useCallback(() => {
@@ -48,6 +49,7 @@ const TabViewExample = ({ route }) => {
         console.log('👈 Επιστροφή στην αρχική — καθάρισμα');
         updateSelectSup(null);
         handleQuantityChange([]);
+        updateCurrentSetId(null);
       };
     }, [])
   );

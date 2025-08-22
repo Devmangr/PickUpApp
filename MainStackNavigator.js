@@ -8,6 +8,7 @@ import Availability from "./components/Availability";
 import InOutSup from "./components/InOutSup";
 import ItemInfo from "./components/ItemInfo";
 import OrderScreen from "./screens/OrderScreen";
+import AppVersionInfo from "./components/versionInfo";
 
 const Stack = createStackNavigator();
 
@@ -25,6 +26,7 @@ const MainStackNavigator = () => {
       <Stack.Screen name="Παραλαβή Προϊόντων" component={TabViewExample} />
       <Stack.Screen name="Επιστροφή Προϊόντων" component={TabViewExample} />
       <Stack.Screen name="Απογραφή Προϊόντων" component={TabViewExample} />
+      <Stack.Screen name="Πληροφορίες Εφαρμογής" component={AppVersionInfo} />
     </Stack.Navigator>
   );
 };
